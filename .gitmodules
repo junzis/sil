@@ -1,0 +1,4 @@
+[submodule "adsb_decoder"]
+	path = adsb_decoder
+	url = https://github.com/junzis/py-adsb-decoder
+	branch = master
