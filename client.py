@@ -6,23 +6,22 @@ Stream data from a TCP server providing datafeed of ADS-B messages
 import os
 import socket
 import time
-import threading
+import datetime
 import math
 from pymongo import MongoClient
 from adsb_decoder import decoder
 
-mongo_client = MongoClient('localhost', 27017)
-adsb_collection = mongo_client.ADSB.messages0814
+class Client():
 
-host = '131.180.117.39'
-port = 10001
-tcp_buffer_size = 1024
+    def __init__(self):
+        self.stdin_path = '/dev/null'
+        self.stdout_path = '/dev/tty'
+        self.stderr_path = '/dev/tty'
+        self.pidfile_path =  '/tmp/sil-adsb-client.pid'
+        self.pidfile_timeout = 5
 
-
-
-def read_message(msgtype, data):
-    ''' Process the message that received from remote TCP server '''  
-    if msgtype == 3:
+    def extract_adsb(self, data):
+        ''' Process the message that received from remote TCP server '''  
         # get time second
         tv_sec = 0
         tv_sec |= data[0] << 24
@@ -39,15 +38,7 @@ def read_message(msgtype, data):
 
         timestamp = float( str(tv_sec) + '.' + str(tv_nsec) )
 
-        # ignor receiver id, data[8]
-        # ignor data[9], for now
-
-        mlat = 0
-        mlat |= data[10] << 24
-        mlat |= data[11] << 16
-        mlat |= data[12] << 8
-        mlat |= data[13]
-
+        # receiver power
         power = 0
         power |= data[14] << 8
         power |= data[15]
@@ -62,60 +53,81 @@ def read_message(msgtype, data):
         for i in data[msgstart : msgend] :
             msg += "%02X" % i
 
-        # print "Type:%d | Time: %f | Power:%d | MSG: %s"  % (msgtype, timestamp, power, msg)
-
         df = decoder.get_df(msg)
 
         if df == 17:
             addr = decoder.get_icao_addr(msg)
             tc = decoder.get_tc(msg)
+            adsb = {}
+            adsb['addr'] = addr
+            adsb['power'] = power
+            adsb['msg'] = msg
+            adsb['tc'] = tc
+            adsb['time'] = timestamp
+            return adsb
+        return None
 
-            entry = {}
-            entry['addr'] = addr
-            entry['power'] = power
-            entry['msg'] = msg
-            entry['tc'] = tc
-            entry['time'] = timestamp
-            adsb_collection.insert(entry)
+    def connect(self, host, port):
+        while True:
+            try:
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.settimeout(10)    # 10 second timeout
+                s.connect((host, port))
+                print "Server %s connected" % host
+                return s
+            except socket.error as err:
+                print "Socket connection error: %s. reconnecting..." % err
+                time.sleep(3)
 
-            print addr, msg, tc, timestamp, power
+    def run(self):
+        mclient = MongoClient('localhost', 27017)
+        mdb = mclient.SIL
 
-        return
+        host = '131.180.117.39'
+        port = 10001
+        tcp_buffer_size = 1024
 
-def connect():
-    while True:
-        try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(10)    # 10 second timeout
-            s.connect((host, port))
-            print "Server %s connected" % host
-            return s
-        except socket.error as err:
-            print "Socket connection error: %s. reconnecting..." % err
-            time.sleep(3)
+        sock = self.connect(host, port)
 
-sock = connect()
+        while True:
+            try:
+                raw_data = sock.recv(tcp_buffer_size)
+                if raw_data == b'':
+                    raise RuntimeError("socket connection broken")
+                else:
+                    # print ''.join(x.encode('hex') for x in raw_data)
 
-while True:
-    try:
-        raw_data = sock.recv(tcp_buffer_size)
-        if raw_data == b'':
-            raise RuntimeError("socket connection broken")
-        else:
-            # print ''.join(x.encode('hex') for x in raw_data)
+                    # covert the char to int
+                    data = [ord(i) for i in raw_data]
 
-            data = [ord(i) for i in raw_data]    # covert the char to int
+                    # looking for ADS-B data, start with "0x1B", or 27
+                    if data[0] != 27:
+                        pass
 
-            if data[0] == 27:                    # looking for ADS-B data, start with "0x1B"
-                try:
-                    datatype = int(raw_data[1])
-                    datalen = data[2]<<8 | data[3]
-                    read_message(datatype, data[4:])
-                except Exception, err:
-                    print err
-                    pass
-    except RuntimeError, err:
-        print "Error %s. reconnecting.." % err
-        sock = connect()
-        pass
+                    msgtype = int(raw_data[1])
+                    msglen = data[2]<<8 | data[3]
+                    msgsegment = data[4:]
 
+                    # check message type
+                    if msgtype == 3:
+                        pass;
+
+                    # get adsb data to be recorded
+                    adsb = self.extract_adsb(msgsegment)
+                    if adsb:
+                        # print adsb
+                        coll_name = str(datetime.date.today())
+                        mcoll = mdb[coll_name]
+                        mcoll.insert(adsb)
+            except RuntimeError, e:
+                print "Error:", e
+                print "Socket reconnecting..."
+                sock = connect(host, port)
+                pass
+            except Exception, e:
+                print "Unexpected Error:", e
+                pass
+
+if __name__ == '__main__':
+    client = Client()
+    client.run()
