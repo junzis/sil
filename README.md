@@ -21,11 +21,16 @@ $ mongodump --db database_name --collection collection_name
 
 Or dump directly to a gzipped file
 ```sh
-$ mongodump --db datavase_name --collection collection_name -out - | gzip > dump_file_name.gz
+$ mongodump --db database_name --collection collection_name --out - | gzip > dump_file_name.gz
 ```
 
 To import your backup file to mongodb you can use the following command on your
 terminal
 ```sh
 $ mongorestore --db database_name path_to_bson_file.bson
+```
+
+Extract an GZIP file with:
+```
+gunzip -c dump_file_name.gz > dump_file_name.bson  
 ```
