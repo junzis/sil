@@ -10,6 +10,7 @@ import threading
 import pymongo
 from matplotlib import pyplot as plt
 
+sys.path.append('../adsb_decoder/')
 import decoder
 
 #--------------------------------
@@ -88,7 +89,9 @@ def worker(s, icaos, msgcoll, poscoll, vhcoll):
         toc = time.time()
         tt = int(toc - tic)
 
-        logging.debug( str(tt) +' seconds' )
+        logging.debug( str(tt) + ' seconds. ' \
+                     + str(len(positions)) + ' postions, ' \
+                     + str(len(velocities)) + ' velocities.' )
     return
 
 
@@ -129,14 +132,14 @@ def main():
     logging.basicConfig(level=logging.DEBUG, 
             format='%(asctime)s (%(threadName)-2s) %(message)s')
 
-    print 'launching %d threads for processing aircrafts' % (len(icaos))
-
     # launching a pool of threads for a chunk of icaos
     # chuck will increase the query spead a LOT!!
     chunk_size = 50
     n_chunks = int ( len(icaos) / chunk_size ) + 1
 
-    s = threading.Semaphore(10)
+    print 'launching %d threads for processing aircrafts' % (n_chunks)
+
+    s = threading.Semaphore(6)
     threads = []
     for i in xrange(n_chunks):
         icao_chunk = icaos[i*chunk_size : (i+1)*chunk_size]

@@ -5,8 +5,17 @@ from matplotlib import pyplot as plt
 from sklearn import preprocessing
 from pymongo import MongoClient
 
+#--------------------------------
+# Configuration for the database
+#--------------------------------
+HOST = "localhost"
+PORT = 27017
+DB = 'SIL'
+POS_COLL = '2015-09-08-pos'
+SEGMENT_COLL = '2015-09-08-segments'
+
 mongo_client = MongoClient('localhost', 27017)
-mdb = mongo_client.ADSB
+mdb = mongo_client[DB]
 
 ids = []
 lats = []
@@ -14,7 +23,7 @@ lons = []
 alts = []
 times = []
 
-allpos = mdb.pos_0707.find().limit(1000000)
+allpos = mdb[POS_COLL].find()
 
 for pos in allpos:
     ids.append(pos['icao'])
@@ -100,13 +109,13 @@ for k in acs.keys():
 t0 = time()
 
 # clear the segment collection first
-mdb.segments.drop()
+mdb[SEGMENT_COLL].drop()
 
 for k, segs in acsegs.iteritems():
     for sg in segs:
         if len(sg) == 0:
             continue
         entry = {'icao': k, 'data':sg}
-        mdb.segments.save(entry)
+        mdb[SEGMENT_COLL].save(entry)
 
 print("MongoDB wirte done in %0.3fs" % (time() - t0))

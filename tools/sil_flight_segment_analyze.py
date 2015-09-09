@@ -7,39 +7,19 @@ from pymongo import MongoClient
 from pykalman import KalmanFilter
 from mpl_toolkits.basemap import Basemap
 
+#--------------------------------
+# Configuration for the database
+#--------------------------------
+HOST = "localhost"
+PORT = 27017
+DB = 'SIL'
+SEGMENT_COLL = '2015-09-08-segments'
 
 mongo_client = MongoClient('localhost', 27017)
-mdb = mongo_client.ADSB
+mdb = mongo_client[DB]
 
-res = mdb.segments.find({})
+res = mdb[SEGMENT_COLL].find({})
 
-def runningMeanFast(x, N):
-    return np.convolve(x, np.ones((N,))/N, mode="valid")
-
-def savitzky_golay(data, window_size, order, deriv=0, rate=1):
-    import numpy as np
-    from math import factorial
-
-    if window_size % 2 != 1 or window_size < 1:
-        window_size = window_size + 1
-    if window_size < order + 2:
-        window_size = order + 2
-    order_range = range(order+1)
-    half_window = (window_size -1) // 2
-    # precompute coefficients
-    b = np.mat([[k**i for i in order_range] for k in range(-half_window, half_window+1)])
-    m = np.linalg.pinv(b).A[deriv] * rate**deriv * factorial(deriv)
-    # pad the signal at the extremes with
-    # values taken from the signal itself
-    firstvals = data[0] - np.abs( data[1:half_window+1][::-1] - data[0] )
-    lastvals = data[-1] + np.abs(data[-half_window-1:-1][::-1] - data[-1])
-    data = np.concatenate((firstvals, data, lastvals))
-    return np.convolve( m[::-1], data, mode='valid')
-
-def movingaverage(interval, window_size):
-    import numpy as np
-    window = np.ones(int(window_size))/float(window_size)
-    return np.convolve(interval, window)
 
 for r in res:
     data = r['data']
@@ -55,7 +35,7 @@ for r in res:
     lons = data[:,2]
     alts = data[:,3]
 
-    alts_smooth = savitzky_golay(alts, 11, 2)
+    # alts_smooth = savitzky_golay(alts, 11, 2)
 
     # setup mercator map projection.
     plt.subplot(1,2,1)
@@ -69,7 +49,7 @@ for r in res:
     plt.title('Positions on map')
 
     plt.subplot(1,2,2)
-    plt.plot(times, alts_smooth, '-', color='red')
+    # plt.plot(times, alts_smooth, '-', color='red')
     plt.plot(times, alts, '.', color='blue', alpha=0.3)
     plt.ylim([0, 45000])
     plt.title(icao)
