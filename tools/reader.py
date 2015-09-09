@@ -10,40 +10,16 @@ import threading
 import pymongo
 from matplotlib import pyplot as plt
 
-sys.path.append('../adsb_decoder/')
 import decoder
 
 #--------------------------------
 # Configuration for the database
 #--------------------------------
-host = "localhost"
-port = 27017
-db = 'SIL'
-date = '2015-09-07'
+HOST = "localhost"
+PORT = 27017
+DB = 'SIL'
 
-mclient = pymongo.MongoClient(host, port)
-mdb = pymongo.database.Database(mclient, db)
-msgcoll = mdb[date]
-poscoll = mdb[date + '-pos']
-vhcoll = mdb[date + '-vh']
-
-def export_pos_kml(positions):
-    '''Save a part of the positions as KML to test'''
-    import simplekml
-    kml = simplekml.Kml()
-    coords = []
-    for p in positions:
-        coords.append((p[0][1], p[0][0], int(p[1]*0.3048)))
-    ls = kml.newlinestring()
-    ls.coords = coords
-    ls.extrude = 1
-    ls.altitudemode = simplekml.AltitudeMode.absolute
-    ls.style.linestyle.color = simplekml.Color.blue 
-    ls.style.linestyle.width = 2  # 2 pixels
-    kml.save("positions.kml")
-
-
-def worker(s, icaos):
+def worker(s, icaos, msgcoll, poscoll, vhcoll):
     '''Decode positions and velocity for an aircraft'''
     
     # waiting for the thread semaphore
@@ -117,7 +93,21 @@ def worker(s, icaos):
 
 
 def main():
-    ''' Get all aircrafts and then decode positions and velocities of each '''
+    # check script arguments - colletion name
+    args = sys.argv
+    if len(args) < 2:
+        sys.exit("MongoDB collection not specified..")
+
+    # Connect to MongoDB
+    mclient = pymongo.MongoClient(HOST, PORT)
+    mdb = pymongo.database.Database(mclient, DB)
+    collname = args[1]
+    msgcoll = mdb[collname]
+    poscoll = mdb[collname + '-pos']
+    vhcoll = mdb[collname + '-vh']
+
+
+    # Get all aircrafts and then decode positions and velocities of each
     # find all the ICAO ID we have seen
     stats = msgcoll.aggregate([
         {
@@ -144,13 +134,14 @@ def main():
     # launching a pool of threads for a chunk of icaos
     # chuck will increase the query spead a LOT!!
     chunk_size = 50
-    n_chunks = int ( len(icaos) / chunk_size )
+    n_chunks = int ( len(icaos) / chunk_size ) + 1
 
     s = threading.Semaphore(10)
     threads = []
     for i in xrange(n_chunks):
         icao_chunk = icaos[i*chunk_size : (i+1)*chunk_size]
-        t =  threading.Thread(target=worker, name=i, args=(s, icao_chunk))
+        t =  threading.Thread(target=worker, name=i, 
+                args=(s, icao_chunk, msgcoll, poscoll, vhcoll))
         t.setDaemon(True)
         t.start()
         threads.append(t)
@@ -166,4 +157,4 @@ if __name__ == '__main__':
 
     toc = time.time()
     tt = (toc-tic)/60
-    print 'Total processing time: %.2f' % (tt)
+    print 'Completed. Total processing time: %.2f minutes.' % (tt)
