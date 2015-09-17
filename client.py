@@ -87,7 +87,7 @@ class Client():
         mdb = mclient.SIL
 
         host = '127.0.0.1'
-        port = 10001
+        port = 30334
         tcp_buffer_size = 1024
 
         sock = self.connect(host, port)
