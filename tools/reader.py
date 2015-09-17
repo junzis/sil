@@ -1,5 +1,12 @@
 """ 
-Decoding aircraft data from ADSM message database
+Decode aircraft postions and velocities from ADS-B messages
+
+To use the script:
+    $ python reader.py YYYY-MM-DD
+
+Following new collections will be generated:
+    YYYY-MM-DD-pos : decoded postions of all aircrafts
+    YYYY-MM-DD-vh : decoded velocities of all aircrafts
 
 """
 

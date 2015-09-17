@@ -4,6 +4,7 @@ Stream data from a TCP server providing datafeed of ADS-B messages
 """
 
 import socket
+import sys, os
 import time
 import datetime
 from pymongo import MongoClient
@@ -80,11 +81,12 @@ class Client():
             messages.append([msg, ts])
         return messages
 
+
     def run(self):
         mclient = MongoClient('localhost', 27017)
         mdb = mclient.SIL
 
-        host = '127.0.0.1'
+        host = '131.180.117.39'
         port = 10001
         tcp_buffer_size = 1024
 
@@ -94,17 +96,22 @@ class Client():
         while True:
             try:
                 raw = sock.recv(tcp_buffer_size)
-                # print ''.join(x.encode('hex') for x in raw_data)
+                # print ''.join(x.encode('hex') for x in raw)
 
-                messages = self.read_mode_s(raw, timestamp)
+                messages = self.read_mode_s(raw)
 
                 if not messages:
                     continue
 
                 for msg, ts in messages:
+                    if len(msg) < 28:
+                        continue
+
                     df = decoder.get_df(msg)
                     if df != 17:
                         continue
+
+                    decoder.checksum(msg)
 
                     addr = decoder.get_icao_addr(msg)
                     tc = decoder.get_tc(msg)
