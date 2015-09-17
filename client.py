@@ -111,7 +111,8 @@ class Client():
                     if df != 17:
                         continue
 
-                    decoder.checksum(msg)
+                    if not decoder.checksum(msg):
+                        continue
 
                     addr = decoder.get_icao_addr(msg)
                     tc = decoder.get_tc(msg)
