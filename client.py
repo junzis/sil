@@ -86,7 +86,7 @@ class Client():
         mclient = MongoClient('localhost', 27017)
         mdb = mclient.SIL
 
-        host = '131.180.117.39'
+        host = '127.0.0.1'
         port = 10001
         tcp_buffer_size = 1024
 
