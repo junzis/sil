@@ -86,12 +86,15 @@ class Client():
         mclient = MongoClient('localhost', 27017)
         mdb = mclient.SIL
 
+        # host = '131.180.117.39'
+        # port = 10001
+
         host = '127.0.0.1'
         port = 30334
-        tcp_buffer_size = 1024
+
+        tcp_buffer_size = 1500
 
         sock = self.connect(host, port)
-
 
         while True:
             try:
