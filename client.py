@@ -31,7 +31,7 @@ class Client():
                 print "Socket connection error: %s. reconnecting..." % err
                 time.sleep(3)
 
-    def read_mode_s(self, raw):
+    def read_mode_s(self, data):
         '''
         <esc> "1" : 6 byte MLAT timestamp, 1 byte signal level, 2 byte Mode-AC
         <esc> "2" : 6 byte MLAT timestamp, 1 byte signal level, 7 byte Mode-S short frame
@@ -43,9 +43,6 @@ class Client():
         timestamp: 
         http://wiki.modesbeast.com/Radarcape:Firmware_Versions#The_GPS_timestamp
         '''
-
-        # convert raw data to integer represntation
-        data = [ord(i) for i in raw]
 
         # split raw data into chunks
         chunks = []
@@ -92,16 +89,27 @@ class Client():
         host = '127.0.0.1'
         port = 30334
 
-        tcp_buffer_size = 1500
+        tcp_buffer = ''
 
         sock = self.connect(host, port)
 
         while True:
             try:
-                raw = sock.recv(tcp_buffer_size)
-                # print ''.join(x.encode('hex') for x in raw)
+                tcp_buffer += sock.recv(1024)
+                # print ''.join(x.encode('hex') for x in tcp_buffer)
 
-                messages = self.read_mode_s(raw)
+                # process buffer when it is longer enough
+                if len(tcp_buffer) < 2048:
+                    continue
+
+                # process the buffer until the last divider <esc> 0x1a
+                # then, reset the buffer with the remainder
+                bfdata = [ord(i) for i in tcp_buffer]
+                n = (len(bfdata) - 1) - bfdata[::-1].index(0x1a)
+                data = bfdata[:n]
+                tcp_buffer = tcp_buffer[n:]
+
+                messages = self.read_mode_s(data)
 
                 if not messages:
                     continue
@@ -129,10 +137,11 @@ class Client():
                     coll_name = str(datetime.date.today())
                     mcoll = mdb[coll_name]
                     mcoll.insert(adsb)
-
+                time.sleep(0.001)
             except Exception, e:
                 print "Unexpected Error:", e
                 pass
+
 
 if __name__ == '__main__':
     client = Client()
