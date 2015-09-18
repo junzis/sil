@@ -1,22 +1,20 @@
-""" 
+'''
 Stream data from a TCP server providing datafeed of ADS-B messages
-
-"""
+'''
 
 import socket
-import sys, os
 import time
 import datetime
 from pymongo import MongoClient
 from adsb_decoder import decoder
 
-class Client():
 
+class Client():
     def __init__(self):
         self.stdin_path = '/dev/null'
         self.stdout_path = '/dev/tty'
         self.stderr_path = '/dev/tty'
-        self.pidfile_path =  '/tmp/sil-adsb-client.pid'
+        self.pidfile_path = '/tmp/sil-adsb-client.pid'
         self.pidfile_timeout = 5
 
     def connect(self, host, port):
@@ -33,15 +31,19 @@ class Client():
 
     def read_mode_s(self, data):
         '''
-        <esc> "1" : 6 byte MLAT timestamp, 1 byte signal level, 2 byte Mode-AC
-        <esc> "2" : 6 byte MLAT timestamp, 1 byte signal level, 7 byte Mode-S short frame
-        <esc> "3" : 6 byte MLAT timestamp, 1 byte signal level, 14 byte Mode-S long frame
-        <esc> "4" : 6 byte MLAT timestamp, status data, DIP switch configuration settings (not on Mode-S Beast classic)
+        <esc> "1" : 6 byte MLAT timestamp, 1 byte signal level,
+            2 byte Mode-AC
+        <esc> "2" : 6 byte MLAT timestamp, 1 byte signal level,
+            7 byte Mode-S short frame
+        <esc> "3" : 6 byte MLAT timestamp, 1 byte signal level,
+            14 byte Mode-S long frame
+        <esc> "4" : 6 byte MLAT timestamp, status data, DIP switch
+            configuration settings (not on Mode-S Beast classic)
         <esc><esc>: true 0x1a
         <esc> is 0x1a, and "1", "2" and "3" are 0x31, 0x32 and 0x33
 
-        timestamp: 
-        http://wiki.modesbeast.com/Radarcape:Firmware_Versions#The_GPS_timestamp
+        timestamp:
+        wiki.modesbeast.com/Radarcape:Firmware_Versions#The_GPS_timestamp
         '''
 
         # split raw data into chunks
@@ -51,9 +53,9 @@ class Client():
         for d in data:
             if d == separator:
                 # shortest msgs are 11 chars
-                if len(piece) > 10 :
+                if len(piece) > 10:
                     chunks.append(piece)
-                piece =[]
+                piece = []
             piece.append(d)
 
         # extract messages
@@ -77,7 +79,6 @@ class Client():
 
             messages.append([msg, ts])
         return messages
-
 
     def run(self):
         mclient = MongoClient('localhost', 27017)
