@@ -82,13 +82,12 @@ class Client():
 
     def run(self):
         mclient = MongoClient('localhost', 27017)
-        mdb = mclient.SIL
 
-        # host = '131.180.117.39'
-        # port = 10001
-
-        host = '127.0.0.1'
+        host = '131.180.117.39'
         port = 30334
+
+        # host = '127.0.0.1'
+        # port = 30334
 
         tcp_buffer = ''
 
@@ -136,7 +135,7 @@ class Client():
 
                     # get the current MongoDB collection, by data
                     today = str(datetime.datetime.now().strftime("%Y_%m_%d"))
-                    mcoll = mdb[today]
+                    mcoll = mclient['SIL_'+today][today]
                     mcoll.insert(adsb)
                 time.sleep(0.001)
             except Exception, e:
