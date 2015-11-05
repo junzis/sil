@@ -6,3 +6,5 @@ if not os.path.isfile('/tmp/sil-adsb-client.pid'):
     subprocess.call([sys.executable,
                      os.path.dirname(os.path.realpath(__file__))
                      + '/sil_client_service.py', 'start'])
+else:
+    print "SIL client service is running."

@@ -5,8 +5,14 @@ The software is designed to collect raw ADS-B message from C&S antenna Readbeast
 ## Runing Client Service
 Start the client service with:
 ```sh
-$ python sil_client_service.py
+$ python sil_client_service.py start
 ```
+
+Stop the client service with:
+```sh
+$ python sil_client_service.py stop
+```
+
 
 Check the service, and start existing:
 ```sh
