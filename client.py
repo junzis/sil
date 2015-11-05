@@ -135,8 +135,8 @@ class Client():
                     adsb['time'] = ts
 
                     # get the current MongoDB collection, by data
-                    coll_name = str(datetime.date.today())
-                    mcoll = mdb[coll_name]
+                    today = str(datetime.datetime.now().strftime("%Y_%m_%d"))
+                    mcoll = mdb[today]
                     mcoll.insert(adsb)
                 time.sleep(0.001)
             except Exception, e:
