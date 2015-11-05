@@ -114,8 +114,8 @@ def main():
     mdb = pymongo.database.Database(mclient, DB)
     collname = args[1]
     msgcoll = mdb[collname]
-    poscoll = mdb[collname + '-pos']
-    vhcoll = mdb[collname + '-vh']
+    poscoll = mdb[collname + '_pos']
+    vhcoll = mdb[collname + '_vh']
 
     # Get all aircrafts and then decode positions and velocities of each
     # find all the ICAO ID we have seen
