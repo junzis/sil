@@ -18,11 +18,9 @@ import pymongo
 sys.path.append('../adsb_decoder/')
 import decoder
 
-
 # Configuration for the database
 HOST = "localhost"
 PORT = 27017
-DB = 'SIL'
 
 
 def worker(s, icaos, msgcoll, poscoll, vhcoll):
@@ -106,16 +104,18 @@ def worker(s, icaos, msgcoll, poscoll, vhcoll):
 def main():
     # check script arguments - colletion name
     args = sys.argv
-    if len(args) < 2:
-        sys.exit("MongoDB collection not specified..")
+    if len(args) < 3:
+        sys.exit("MongoDB database or collection not specified..")
+
+    db = args[1]
+    coll = args[2]
 
     # Connect to MongoDB
     mclient = pymongo.MongoClient(HOST, PORT)
-    mdb = pymongo.database.Database(mclient, DB)
-    collname = args[1]
-    msgcoll = mdb[collname]
-    poscoll = mdb[collname + '_pos']
-    vhcoll = mdb[collname + '_vh']
+
+    msgcoll = mclient[db][coll]
+    poscoll = mclient[db][coll + '_pos']
+    vhcoll = mclient[db][coll + '_vh']
 
     # Get all aircrafts and then decode positions and velocities of each
     # find all the ICAO ID we have seen
