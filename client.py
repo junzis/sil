@@ -106,7 +106,7 @@ class Client():
                 # then, reset the buffer with the remainder
                 bfdata = [ord(i) for i in tcp_buffer]
                 n = (len(bfdata) - 1) - bfdata[::-1].index(0x1a)
-                data = bfdata[:n]
+                data = bfdata[:n-1]
                 tcp_buffer = tcp_buffer[n:]
 
                 messages = self.read_mode_s(data)

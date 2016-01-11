@@ -90,8 +90,8 @@ for icao in icaos:
             pos['spd'] = c[0][0]
             pos['hdg'] = c[0][1]
         else:
-            pos['spd'] = None
-            pos['hdg'] = None
+            pos['spd'] = np.nan
+            pos['hdg'] = np.nan
 
         data.append(pos)
 
