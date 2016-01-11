@@ -23,30 +23,24 @@ TEST_FLAG = True     # weather this is a test run
 # get script arguments
 parser = argparse.ArgumentParser()
 parser.add_argument('--db', dest="db", required=True)
-parser.add_argument('--collpos', dest='collpos', required=True,
-                    help="Postion collection name")
-parser.add_argument('--collvh', dest='collvh', required=True,
-                    help="Postion collection name")
-parser.add_argument('--collmerge', dest='collmerge', required=True,
-                    help="Postion collection name")
+parser.add_argument('--date', dest='date', required=True,
+                    help="Date for position and velocity data")
 args = parser.parse_args()
 
 db = args.db
-collpos = args.collpos
-collvh = args.collvh
-collmerge = args.collmerge
+date = args.date
 
 mclient = MongoClient('localhost', 27017)
 
-mcollpos = mclient[db][collpos]
-mcollvh = mclient[db][collvh]
-mcollmerge = mclient[db][collmerge]
+mcollp = mclient[db][date + '_p']
+mcollv = mclient[db][date + '_v']
+mcollmerge = mclient[db][date]
 
 # clear output database
 mcollmerge.drop()
 
 # fetch all icaos
-q = mcollpos.aggregate([
+q = mcollp.aggregate([
     {
         '$group': {
             '_id': '$icao',
@@ -64,35 +58,36 @@ for icao in icaos:
     count += 1
     print "processing %d of %d" % (count, total_counts)
 
-    positions = list(mcollpos.find({'icao': icao}))
-    vhs = list(mcollvh.find({'icao': icao}))
+    ps = list(mcollp.find({'icao': icao}))
+    vs = list(mcollv.find({'icao': icao}))
 
-    if not len(vhs):
+    if not len(vs):
         continue
 
-    vhsnp = np.array([[vh['spd'], vh['hdg'], vh['ts']] for vh in vhs])
-    a = np.zeros(vhsnp.shape)
+    vsnp = np.array([[v['spd'], v['hdg'], v['roc'], v['ts']] for v in vs])
+    a = np.zeros(vsnp.shape)
 
     data = []
 
-    for pos in positions:
-        ts = pos['ts']
-        icao = pos['icao']
+    for p in ps:
+        ts = p['ts']
+        icao = p['icao']
 
-        a[:, 0] = vhsnp[:, 0]
-        a[:, 1] = vhsnp[:, 1]
-        a[:, 2] = np.abs(vhsnp[:, 2] - ts)
+        a[:, 0:3] = vsnp[:, 0:3]
+        a[:, 3] = np.abs(vsnp[:, 3] - ts)
 
-        b = a[a[:, 2] <= 5]
-        c = b[b[:, 2].argsort()]
+        b = a[a[:, 3] <= 5]         # v dt within 5 sec
+        c = b[b[:, 3].argsort()]    # sort by dt
 
         if len(c):
-            pos['spd'] = c[0][0]
-            pos['hdg'] = c[0][1]
+            p['spd'] = c[0][0]
+            p['hdg'] = c[0][1]
+            p['roc'] = c[0][2]
         else:
-            pos['spd'] = np.nan
-            pos['hdg'] = np.nan
+            p['spd'] = np.nan
+            p['hdg'] = np.nan
+            p['roc'] = np.nan
 
-        data.append(pos)
+        data.append(p)
 
     mcollmerge.insert(data)

@@ -10,6 +10,7 @@ Following new collections will be generated:
 
 """
 
+import argparse
 import sys
 import time
 import logging
@@ -23,7 +24,7 @@ HOST = "localhost"
 PORT = 27017
 
 
-def worker(s, icaos, msgcoll, poscoll, vhcoll):
+def worker(s, icaos, msgcoll, mcollp, mcollv):
     '''Decode positions and velocity for an aircraft'''
 
     # waiting for the thread semaphore
@@ -71,51 +72,64 @@ def worker(s, icaos, msgcoll, poscoll, vhcoll):
                 if not pos:
                     continue
 
-                positions.append({'icao': icao,
-                                  'loc': {'lat': pos[0], 'lng': pos[1]},
-                                  'alt': alt, 'ts': t})
+                positions.append({
+                    'icao': icao,
+                    'loc': {'lat': pos[0], 'lng': pos[1]},
+                    'alt': alt,
+                    'ts': t
+                })
 
         # insert records into MongoDB
         if positions:
-            poscoll.insert(positions)
+            mcollp.insert(positions)
 
         # decode velocity and headings
         velocities = []
         velomsgs = msgcoll.find({'addr': {'$in': icaos}, 'tc': 19})
         for vm in velomsgs:
             addr = vm['addr']
-            [spd, hdg] = decoder.get_speed_heading(vm['msg'])
+            v = decoder.get_velocity(vm['msg'])
             t = int(vm['time'])
-            velocities.append({'icao': addr, 'spd': spd, 'hdg': hdg, 'ts': t})
+            velocities.append({
+                'icao': addr,
+                'spd': v[0],
+                'hdg': v[1],
+                'roc': v[2],
+                'ts': t
+            })
 
         # insert records into MongoDB
         if velocities:
-            vhcoll.insert(velocities)
+            mcollv.insert(velocities)
 
         toc = time.time()
         tt = int(toc - tic)
 
-        logging.debug(str(tt) + ' seconds. '
-                      + str(len(positions)) + ' postions, '
-                      + str(len(velocities)) + ' velocities.')
+        logging.debug(str(tt) + ' seconds. ' +
+                      str(len(positions)) + ' postions, ' +
+                      str(len(velocities)) + ' velocities.')
     return
 
 
 def main():
-    # check script arguments - colletion name
-    args = sys.argv
-    if len(args) < 3:
-        sys.exit("MongoDB database or collection not specified..")
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--db', dest="db", required=True)
+    parser.add_argument('--date', dest='date', required=True,
+                        help="Date for position and velocity data")
+    args = parser.parse_args()
 
-    db = args[1]
-    coll = args[2]
+    db = args.db
+    date = args.date
 
     # Connect to MongoDB
     mclient = pymongo.MongoClient(HOST, PORT)
 
-    msgcoll = mclient[db][coll]
-    poscoll = mclient[db][coll + '_pos']
-    vhcoll = mclient[db][coll + '_vh']
+    msgcoll = mclient[db][date + '_raw']
+    mcollp = mclient[db][date + '_p']
+    mcollv = mclient[db][date + '_v']
+
+    mcollp.drop()
+    mcollv.drop()
 
     # Get all aircrafts and then decode positions and velocities of each
     # find all the ICAO ID we have seen
@@ -151,7 +165,7 @@ def main():
     for i in xrange(n_chunks):
         icao_chunk = icaos[i*chunk_size: (i+1)*chunk_size]
         t = threading.Thread(target=worker, name=i,
-                             args=(s, icao_chunk, msgcoll, poscoll, vhcoll))
+                             args=(s, icao_chunk, msgcoll, mcollp, mcollv))
         t.setDaemon(True)
         t.start()
         threads.append(t)
