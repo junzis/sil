@@ -1,4 +1,10 @@
 """
+To use the script:
+    $ python merge_pv.py --db DB_NAME --date YYYY_MM_DD
+
+Script will look for the position and velocity collections (DATE_p and DATE_v),
+then merge the position with the velocities into a new collection (name: DATE)
+
 So the ideas here is:
 
 A. Get all ICAOs in position collection, the loop throw each
@@ -56,12 +62,12 @@ count = 0
 for icao in icaos:
 
     count += 1
-    print "processing %d of %d" % (count, total_counts)
+    print "Merging P/V: %d of %d" % (count, total_counts)
 
     ps = list(mcollp.find({'icao': icao}))
     vs = list(mcollv.find({'icao': icao}))
 
-    if not len(vs):
+    if len(ps) < 100 or len(vs) < 100:
         continue
 
     vsnp = np.array([[v['spd'], v['hdg'], v['roc'], v['ts']] for v in vs])

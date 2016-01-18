@@ -2,11 +2,12 @@
 Decode aircraft postions and velocities from ADS-B messages
 
 To use the script:
-    $ python reader.py YYYY-MM-DD
+    $ python decode_all.py --db DB_NAME --date YYYY_MM_DD
 
-Following new collections will be generated:
-    YYYY-MM-DD-pos : decoded postions of all aircrafts
-    YYYY-MM-DD-vh : decoded velocities of all aircrafts
+Script will look for the raw message from the data, and generate the
+following new collections:
+    YYYY_MM_DD_p : decoded postions of all aircrafts
+    YYYY_MM_DD_v : decoded velocities of all aircrafts
 
 """
 
