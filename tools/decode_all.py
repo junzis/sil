@@ -47,7 +47,7 @@ def worker(s, icaos, msgcoll, mcollp, mcollv):
             ts = pm['time']
             pool[addr]['msg'].append(msg)
             pool[addr]['oe'].append(int(decoder.get_oe_flag(msg)))
-            pool[addr]['ts'].append(int(ts))
+            pool[addr]['ts'].append(ts)
 
         positions = []
 
@@ -90,7 +90,7 @@ def worker(s, icaos, msgcoll, mcollp, mcollv):
         for vm in velomsgs:
             addr = vm['addr']
             v = decoder.get_velocity(vm['msg'])
-            t = int(vm['time'])
+            t = vm['time']
             velocities.append({
                 'icao': addr,
                 'spd': v[0],

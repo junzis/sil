@@ -123,15 +123,14 @@ class Client():
                     if df not in [20, 21]:
                         continue
 
-                    addr = decoder.get_icao_addr(msg)
                     ehs = {}
-                    ehs['addr'] = addr
                     ehs['msg'] = msg
+                    ehs['df'] = df
                     ehs['time'] = ts
 
                     # get the current MongoDB collection, by data
-                    today = 'EHS_'+str(datetime.datetime.now().strftime("%Y_%m_%d"))
-                    mcoll = mclient['SIL_'+today][today]
+                    today = str(datetime.datetime.now().strftime("%Y_%m_%d"))
+                    mcoll = mclient['EHS'][today]
                     mcoll.insert(ehs)
                 time.sleep(0.001)
             except Exception, e:
