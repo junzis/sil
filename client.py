@@ -12,8 +12,8 @@ from adsb_decoder import decoder
 class Client():
     def __init__(self):
         self.stdin_path = '/dev/null'
-        self.stdout_path = '/dev/tty'
-        self.stderr_path = '/dev/tty'
+        self.stdout_path = '/tmp/adsb-stdout.log'
+        self.stderr_path = '/tmp/adsb-error.log'
         self.pidfile_path = '/tmp/sil-adsb-client.pid'
         self.pidfile_timeout = 5
 
@@ -83,11 +83,11 @@ class Client():
     def run(self):
         mclient = MongoClient('localhost', 27017)
 
-        host = '131.180.117.39'
-        port = 30334
-
-        # host = '127.0.0.1'
+        # host = '131.180.117.39'
         # port = 30334
+
+        host = '127.0.0.1'
+        port = 30334
 
         tcp_buffer = ''
 
