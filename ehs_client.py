@@ -117,7 +117,7 @@ class Client():
                 # get the current MongoDB collection, by data
                 today = str(datetime.datetime.now().strftime("%Y_%m_%d"))
 
-                with open('SIL_EHS_RAW_%s.csv' % today, 'a') as f:
+                with open('data/SIL_EHS_RAW_%s.csv' % today, 'a') as f:
                     writer = csv.writer(f)
                     for msg, ts in messages:
                         if len(msg) < 28:
