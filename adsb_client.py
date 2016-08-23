@@ -24,7 +24,7 @@ class Client():
                 s.settimeout(10)    # 10 second timeout
                 s.connect((host, port))
                 print "Server %s connected" % host
-                print "collecting ehs messages..."
+                print "collecting ADS-B messages..."
                 return s
             except socket.error as err:
                 print "Socket connection error: %s. reconnecting..." % err
