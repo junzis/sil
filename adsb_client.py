@@ -2,12 +2,14 @@
 Stream data from a TCP server providing datafeed of ADS-B messages
 '''
 
+import os
 import socket
 import time
 import datetime
 import csv
 import pyModeS as pms
 
+dataroot = os.path.dirname(os.path.realpath(__file__)) + "/data/"
 
 class Client():
     def __init__(self):
@@ -114,10 +116,11 @@ class Client():
                 if not messages:
                     continue
 
-                # get the current MongoDB collection, by data
+                # get the current date file
                 today = str(datetime.datetime.now().strftime("%Y%m%d"))
+                csvfile = dataroot + 'SIL_ADSB_RAW_%s.csv' % today
 
-                with open('data/SIL_ADSB_RAW_%s.csv' % today, 'a') as f:
+                with open(csvfile, 'a') as f:
                     writer = csv.writer(f)
 
                     for msg, ts in messages:
