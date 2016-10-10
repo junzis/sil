@@ -118,7 +118,7 @@ class Client():
 
                 # get the current date file
                 today = str(datetime.datetime.now().strftime("%Y%m%d"))
-                csvfile = dataroot + 'SIL_EHS_RAW_%s.csv' % today
+                csvfile = dataroot + 'EHS_RAW_%s.csv' % today
 
                 with open(csvfile, 'a') as f:
                     writer = csv.writer(f)
