@@ -6,7 +6,7 @@ import socket
 import time
 import datetime
 from pymongo import MongoClient
-from adsb_decoder import decoder
+import pyModeS as pms
 
 
 class Client():
@@ -119,7 +119,7 @@ class Client():
                     if len(msg) < 28:
                         continue
 
-                    df = decoder.get_df(msg)
+                    df = pms.df(msg)
 
                     if df not in [20, 21]:
                         continue

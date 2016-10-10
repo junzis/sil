@@ -6,7 +6,7 @@ import socket
 import time
 import datetime
 from pymongo import MongoClient
-from adsb_decoder import decoder
+import pyModeS as pms
 
 
 class Client():
@@ -118,15 +118,16 @@ class Client():
                     if len(msg) < 28:
                         continue
 
-                    df = decoder.get_df(msg)
+                    df = pms.df(msg)
                     if df != 17:
                         continue
 
-                    if not decoder.checksum(msg):
+                    if '1' in pms.crc(msg):
                         continue
 
-                    addr = decoder.get_icao_addr(msg)
-                    tc = decoder.get_tc(msg)
+                    addr = pms.adsb.icao(msg)
+                    tc = pms.adsb.typecode(msg)
+
                     adsb = {}
                     adsb['addr'] = addr
                     adsb['msg'] = msg
