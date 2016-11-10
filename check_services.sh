@@ -1,12 +1,12 @@
 #!/bin/bash
 
-PFILE_ADSB=/tmp/sil-adsb-client.pid
-PFILE_EHS=/tmp/sil-ehs-client.pid
+PFILE_ADSB=/tmp/beast-adsb-client.pid
+PFILE_EHS=/tmp/beast-ehs-client.pid
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-ADSB_SCRIPT=$SCRIPT_DIR/adsb_service_run.py
-EHS_SCRIPT=$SCRIPT_DIR/ehs_service_run.py
+ADSB_SCRIPT=$SCRIPT_DIR/daemon_run_adsb_client.py
+EHS_SCRIPT=$SCRIPT_DIR/daemon_run_ehs_client.py
 
 if [ ! -f $PFILE_ADSB ]
 then
