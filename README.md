@@ -1,6 +1,11 @@
-# SIL - C&S ADS-B Collector Client Application
+# Python Client for Mode-s Beast Raw Data
 
-The software is designed to collect raw ADS-B message from C&S antenna Readbeast server, and store them in MongoDB. Codes located in ```tools``` are to be used on ADS-B message processing, which are not fully tested.
+The tool is designed in Python to dump raw ADS-B or EHS message from a mode-s beast raw data stream.
+
+For example, it can be used in combination with [modesmixer2](http://xdeco.org/?page_id=48) and your favorite receiver:
+```sh
+$ modesmixer2 --inSeriel port[:speed[:flow_control]] --outServer beast:30334
+```
 
 ## Runing Client Service
 Start the client (ADSB or EHS) service with:
@@ -16,7 +21,7 @@ $ python daemon_run_ehs_client.py stop
 ```
 
 
-Check both service status, and start if not running:
+Script quickly checking both service status, start them if not running:
 ```sh
 $ python check_service.py
 ```
