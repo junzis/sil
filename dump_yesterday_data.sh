@@ -22,10 +22,10 @@ cp ${datafolder}/EHS_RAW_${yesterday}.csv.gz ${folder2}
 
 # remove data from one week ago
 olddate=$(date +%Y%m%d -d "yesterday -7 days")
-rm ${datafolder}/ADSB_RAW_${olddate}.csv.gz
-rm ${datafolder}/EHS_RAW_${olddate}.csv.gz
+rm -f ${datafolder}/ADSB_RAW_${olddate}.csv.gz
+rm -f ${datafolder}/EHS_RAW_${olddate}.csv.gz
 
-# delete data from 4 months ago, if existing
+# delete data on Web dir from 4 months ago, if existing
 oldyear=$(date +%Y -d "-4 month")
 oldmonth=$(date +%m -d "-4 month")
 oldfolder=/mnt/500G/www/dumps/${oldyear}/${oldyear}_${oldmonth}
