@@ -1,6 +1,6 @@
 """
-Use this script to decode an ADS-B dump:
-python decode-adsb.py [input_raw_adsb_dump.csv] [output_file_name.csv]
+Use this script to decode an ADS-B dump in a single thread:
+python decode_adsb_single_thread.py [input_raw_adsb_dump.csv] [output_file_name.csv]
 """
 
 from __future__ import print_function
