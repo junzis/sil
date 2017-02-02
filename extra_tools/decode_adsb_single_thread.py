@@ -10,6 +10,9 @@ import pyModeS as pms
 import warnings
 warnings.filterwarnings("ignore")
 
+COLS = ['ts', 'icao', 'callsign', 'lat', 'lon', 'alt', 'spd', 'hdg', 'roc']
+
+
 def getv(msg):
     """return velocity params from message"""
     v = pms.adsb.velocity(msg)
@@ -23,36 +26,32 @@ except:
     sys.exit()
 
 adsbchunks = pd.read_csv(fin,
-                         names=['ts','icao', 'tc', 'adsb_msg'],
+                         names=['ts','icao', 'tc', 'msg'],
                          chunksize=1000000)
-dfout = pd.DataFrame()
+df_out = pd.DataFrame()
 
-for i, adsb in enumerate(adsbchunks):
+for i, df_raw in enumerate(adsbchunks):
     print("\n--------Chunk %d--------" % (i+1))
-    print("%d number of messages" % adsb.shape[0])
+    print("%d number of messages" % df_raw.shape[0])
 
 
     # select TypeCode  9 - 18, position messages
-    adsbpos = adsb[adsb['tc'].between(9, 18)]
-    adsbpos.drop_duplicates(['ts', 'icao'], inplace=True)
+    df_pos_raw = df_raw[df_raw['tc'].between(9, 18)]
+    df_pos_raw.drop_duplicates(['ts', 'icao'], inplace=True)
 
-    icaos = adsbpos['icao'].unique()
+    icaos = df_pos_raw['icao'].unique()
 
-    print("number of icao: %d" % len(icaos))
+    print("number of icao: %d" %  len(icaos))
 
-    print('Gathering position messages...')
+    # identify the ODD / EVEN flag for each message
+    df_pos_raw.loc[:, 'oe'] = df_pos_raw['msg'].apply(pms.adsb.oe_flag)
 
-    # indentify the ODD / EVEN flag for each message
-    adsbpos.loc[:, 'oe'] = adsbpos['adsb_msg'].apply(pms.adsb.oe_flag)
+    print('decoding positions...')
 
-    print('Decoding positions...')
     postitions = []
     # loop through all aircarft decode there positions
-    for i, icao in enumerate(icaos):
-        if i % 100 == 0:
-            print("%d of %d" % (i, len(icaos)))
-
-        data = adsbpos[adsbpos['icao']==icao]
+    for icao in icaos:
+        data = df_pos_raw[df_pos_raw['icao']==icao]
 
         last_even_msg = ''
         last_odd_msg = ''
@@ -80,7 +79,8 @@ for i, adsb in enumerate(adsbchunks):
                     alt = pms.adsb.altitude(last_odd_msg)
 
                 postitions.append({
-                    'ts': int(ts),
+                    'ts': round(ts, 1),
+                    'ts_rounded': int(round(ts)),
                     'icao': icao,
                     'lat': p[0],
                     'lon': p[1],
@@ -89,24 +89,36 @@ for i, adsb in enumerate(adsbchunks):
             else:
                 continue
 
-    adsbpos_decoded = pd.DataFrame(postitions)
+    df_pos_decoded = pd.DataFrame(postitions)
+
+    print("decoding velocities...")
 
     # fliter by TypeCode 19, velocity messages
-    adsbspd = adsb[adsb['tc']==19]
-    adsbspd.loc[:, 'ts'] = adsbspd['ts'].astype(int)
-    adsbspd.drop_duplicates(['ts', 'icao'], inplace=True)
+    df_spd_raw = df_raw[df_raw['tc']==19]
+    df_spd_raw.loc[:, 'ts_rounded'] = df_spd_raw['ts'].round().astype(int)
+    df_spd_raw.drop_duplicates(['ts_rounded', 'icao'], inplace=True)
+    df_spd_raw.drop('ts', axis=1, inplace=True)
 
     # merge velocity message to decoded positions
-    adsbmerged = adsbpos_decoded.merge(adsbspd, on=['ts', 'icao'])
-    adsbmerged.drop(adsbmerged['adsb_msg'].isnull(), axis=0, inplace=True)
+    df_merged = df_pos_decoded.merge(df_spd_raw, on=['ts_rounded', 'icao'])
+    df_merged.drop(df_merged['msg'].isnull(), axis=0, inplace=True)
+    df_merged = df_merged.join(df_merged['msg'].apply(getv))
 
-    print("Decoding velocities...")
-    adsbmerged = adsbmerged.join(adsbmerged['adsb_msg'].apply(getv))
-    adsbmerged.drop(['tc', 'adsb_msg'], axis=1, inplace=True)
+    print("decoding callsigns...")
 
-    dfout = dfout.append(adsbmerged, ignore_index=True)
+    # fliter by TypeCode 1-4, identification messages
+    df_callsign_raw = df_raw[df_raw['tc'].between(1, 4)]
+    df_callsign_raw.loc[:, 'ts_rounded'] = df_callsign_raw['ts'].round().astype(int)
+    df_callsign_raw.drop_duplicates(['ts', 'icao'], inplace=True)
+    df_callsign_raw['callsign'] = df_callsign_raw['msg'].apply(pms.adsb.callsign)
+    df_callsign = df_callsign_raw.drop(['ts', 'msg'], axis=1)
+
+    df_merged = df_merged.merge(df_callsign, on=['ts_rounded', 'icao'])
+
+    df_merged = df_merged[COLS]
+
+    df_out = df_out.append(df_merged, ignore_index=True)
 
 print("saving csv file: %s" % fout)
-cols = ['ts', 'icao', 'lat', 'lon', 'alt', 'spd', 'hdg', 'roc']
-dfout = dfout[cols]     # rearrange column orders
-dfout.to_csv(fout, index=False)
+df_out.sort_values(['ts', 'icao'], inplace=True)
+df_out.to_csv(fout, index=False)

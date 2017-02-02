@@ -14,7 +14,7 @@ import multiprocessing
 import warnings
 warnings.filterwarnings("ignore")
 
-COLS = ['ts', 'icao', 'lat', 'lon', 'alt', 'spd', 'hdg', 'roc']
+COLS = ['ts', 'icao', 'callsign', 'lat', 'lon', 'alt', 'spd', 'hdg', 'roc']
 
 CHUNKSIZE = 1000000
 N_PARTITIONS = 10
@@ -38,7 +38,6 @@ def process_chunk(df_raw):
 
     print("%s: %d number of messages" % (pname, df_raw.shape[0]))
 
-
     # select TypeCode  9 - 18, position messages
     df_pos_raw = df_raw[df_raw['tc'].between(9, 18)]
     df_pos_raw.drop_duplicates(['ts', 'icao'], inplace=True)
@@ -47,8 +46,8 @@ def process_chunk(df_raw):
 
     print("%s: number of icao: %d" % (pname, len(icaos)))
 
-    # indentify the ODD / EVEN flag for each message
-    df_pos_raw.loc[:, 'oe'] = df_pos_raw['adsb_msg'].apply(pms.adsb.oe_flag)
+    # identify the ODD / EVEN flag for each message
+    df_pos_raw.loc[:, 'oe'] = df_pos_raw['msg'].apply(pms.adsb.oe_flag)
 
     print('%s: decoding positions...' % pname)
 
@@ -105,9 +104,19 @@ def process_chunk(df_raw):
 
     # merge velocity message to decoded positions
     df_merged = df_pos_decoded.merge(df_spd_raw, on=['ts_rounded', 'icao'])
-    df_merged.drop(df_merged['adsb_msg'].isnull(), axis=0, inplace=True)
+    df_merged.drop(df_merged['msg'].isnull(), axis=0, inplace=True)
+    df_merged = df_merged.join(df_merged['msg'].apply(getv))
 
-    df_merged = df_merged.join(df_merged['adsb_msg'].apply(getv))
+    print("%s: decoding callsigns..." % pname)
+
+    # decode callsign
+    df_callsign_raw = df_raw[df_raw['tc'].between(1, 4)]
+    df_callsign_raw.loc[:, 'ts_rounded'] = df_callsign_raw['ts'].round().astype(int)
+    df_callsign_raw.drop_duplicates(['ts', 'icao'], inplace=True)
+    df_callsign_raw['callsign'] = df_callsign_raw['msg'].apply(pms.adsb.callsign)
+    df_callsign = df_callsign_raw.drop(['ts', 'msg'], axis=1)
+
+    df_merged = df_merged.merge(df_callsign, on=['ts_rounded', 'icao'])
 
     df_merged = df_merged[COLS]
 
@@ -122,13 +131,14 @@ def parallelize_df(df, func, n_partitions):
     return df
 
 
-df_adsb_chunks = pd.read_csv(fin, names=['ts','icao', 'tc', 'adsb_msg'], chunksize=CHUNKSIZE)
+df_adsb_chunks = pd.read_csv(fin, names=['ts','icao', 'tc', 'msg'], chunksize=CHUNKSIZE)
 
 with open(fout, 'w') as f:
     f.write(','.join(COLS) + '\n')
 
 for df_adsb in df_adsb_chunks:
     df_out = parallelize_df(df_adsb, process_chunk, N_PARTITIONS)
+    df_out.sort_values(['ts', 'icao'], inplace=True)
 
     print("Append to csv file: %s, %d lines\n" % (fout, df_out.shape[0]))
     df_out.to_csv(fout, mode='a', index=False, header=False)
