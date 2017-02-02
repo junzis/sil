@@ -14,7 +14,7 @@ import multiprocessing
 import warnings
 warnings.filterwarnings("ignore")
 
-COLS = ['ts', 'icao', 'callsign', 'lat', 'lon', 'alt', 'spd', 'hdg', 'roc']
+COLS = ['ts', 'icao', 'lat', 'lon', 'alt', 'spd', 'hdg', 'roc', 'callsign']
 
 CHUNKSIZE = 1000000
 N_PARTITIONS = 10
@@ -29,8 +29,13 @@ except:
 
 def getv(msg):
     """return velocity params from message"""
-    v = pms.adsb.velocity(msg)
-    return pd.Series({'spd': v[0], 'hdg': v[1], 'roc': v[2]})
+    if isinstance(msg, str):
+        v = pms.adsb.velocity(msg)
+        spd, hdg, roc, _ = v
+    else:
+        spd, hdg, roc = None, None, None
+
+    return pd.Series({'spd': spd, 'hdg': hdg, 'roc': roc})
 
 
 def process_chunk(df_raw):
@@ -103,8 +108,7 @@ def process_chunk(df_raw):
     df_spd_raw.drop('ts', axis=1, inplace=True)
 
     # merge velocity message to decoded positions
-    df_merged = df_pos_decoded.merge(df_spd_raw, on=['ts_rounded', 'icao'])
-    df_merged.drop(df_merged['msg'].isnull(), axis=0, inplace=True)
+    df_merged = df_pos_decoded.merge(df_spd_raw, on=['ts_rounded', 'icao'], how='left')
     df_merged = df_merged.join(df_merged['msg'].apply(getv))
 
     print("%s: decoding callsigns..." % pname)
@@ -116,7 +120,7 @@ def process_chunk(df_raw):
     df_callsign_raw['callsign'] = df_callsign_raw['msg'].apply(pms.adsb.callsign)
     df_callsign = df_callsign_raw.drop(['ts', 'msg'], axis=1)
 
-    df_merged = df_merged.merge(df_callsign, on=['ts_rounded', 'icao'])
+    df_merged = df_merged.merge(df_callsign, on=['ts_rounded', 'icao'], how='left')
 
     df_merged = df_merged[COLS]
 
