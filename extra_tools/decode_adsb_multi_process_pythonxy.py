@@ -143,7 +143,7 @@ if __name__ == '__main__':
 
     for df_adsb in df_adsb_chunks:
         df_out = parallelize_df(df_adsb, process_chunk, N_PARTITIONS)
-        df_out.sort_values(['ts', 'icao'], inplace=True)
+        df_out.sort(['ts', 'icao'], inplace=True)
 
         print("Append to csv file: %s, %d lines\n" % (fout, df_out.shape[0]))
         df_out.to_csv(fout, mode='a', index=False, header=False)
