@@ -89,7 +89,7 @@ class BaseClient(object):
                 # Mode-S Short Message, 7 byte, 14-len hexstr
                 msg = ''.join('%02X' % i for i in mm[8:15])
             elif msgtype == 0x33:
-                # Mode-S Short Message, 14 byte, 28-len hexstr
+                # Mode-S Long Message, 14 byte, 28-len hexstr
                 msg = ''.join('%02X' % i for i in mm[8:22])
             else:
                 # Other message tupe
@@ -121,7 +121,6 @@ class BaseClient(object):
                 # process self.buffer when it is longer enough
                 if len(self.buffer) < 2048:
                     continue
-
 
                 messages = self.read_beast_buffer()
 
