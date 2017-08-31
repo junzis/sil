@@ -1,6 +1,6 @@
 """
-decode an ADS-B dump using multiprocessing:
-python decode_adsb_multi_process.py [input_raw_adsb_dump.csv] [output_file_name.csv]
+Decode an ADS-B dump using multiprocessing, run following for arguments
+python decode_adsb_multi_process.py -h
 
 Decrease CHUNKSIZE for low memory computer.
 """
@@ -35,8 +35,8 @@ args = parser.parse_args()
 fin = args.fin
 fout = args.fout
 mergeon = args.mergeon
-lat0 = args.lat0
-lon0 = args.lon0
+lat0 = float(args.lat0)
+lon0 = float(args.lon0)
 
 print('receiver position: %.3f, %.3f' % (lat0, lon0))
 
