@@ -57,6 +57,7 @@ def process_chunk(df_raw):
 
     # typecode 9-18 airborn position | typecode 5-8 surface position
     df_pos_raw = df_raw[(df_raw['tc'].between(9, 18)) | (df_raw['tc'].between(5, 8))]
+    df_pos_raw.dropna(inplace=True)
     df_pos_raw.drop_duplicates(['ts', 'icao'], inplace=True)
 
     icaos = df_pos_raw['icao'].unique()
@@ -121,6 +122,7 @@ def process_chunk(df_raw):
 
     # typecode 19 (airborn velocity) | typecode 5-8 (surface velocity)
     df_spd_raw = df_raw[(df_raw['tc']==19) | (df_raw['tc'].between(5, 8))]
+    df_spd_raw.dropna(inplace=True)
     df_spd_raw.loc[:, 'ts'] = df_spd_raw['ts'].round(2)
     df_spd_raw.drop_duplicates(['ts', 'icao'], inplace=True)
     df_spd_raw.loc[:, 'ts_rounded'] = df_spd_raw['ts'].round().astype(int)

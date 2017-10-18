@@ -7,10 +7,29 @@ from __future__ import print_function
 import sys
 import pandas as pd
 import pyModeS as pms
+import argparse
 import warnings
 warnings.filterwarnings("ignore")
 
+sil_lat = 51.990
+sil_lon = 4.375
+
 COLS = ['ts', 'icao', 'lat', 'lon', 'alt', 'spd', 'hdg', 'roc', 'callsign']
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--fin', help="input csv file", required=True)
+parser.add_argument('--fout', help="output csv file", required=True)
+parser.add_argument('--mergeon', help="merge on postion or velocity",
+                    default='pos', choices=['pos', 'v'])
+parser.add_argument('--lat0', help="latitude of the receiver base", default=sil_lat)
+parser.add_argument('--lon0', help="longitude of the receiver base", default=sil_lon)
+args = parser.parse_args()
+
+fin = args.fin
+fout = args.fout
+mergeon = args.mergeon
+lat0 = float(args.lat0)
+lon0 = float(args.lon0)
 
 
 def getv(msg):
@@ -24,13 +43,6 @@ def getv(msg):
     return pd.Series({'spd': spd, 'hdg': hdg, 'roc': roc})
 
 
-try:
-    fin = sys.argv[1]
-    fout = sys.argv[2]
-except:
-    print("usage: python decode-adsb.py [input_file] [output_file]")
-    sys.exit()
-
 adsbchunks = pd.read_csv(fin,
                          names=['ts','icao', 'tc', 'msg'],
                          chunksize=1000000)
@@ -41,8 +53,9 @@ for i, df_raw in enumerate(adsbchunks):
     print("%d number of messages" % df_raw.shape[0])
 
 
-    # select TypeCode  9 - 18, position messages
-    df_pos_raw = df_raw[df_raw['tc'].between(9, 18)]
+    # typecode 9-18 airborn position | typecode 5-8 surface position
+    df_pos_raw = df_raw[(df_raw['tc'].between(9, 18)) | (df_raw['tc'].between(5, 8))]
+    df_pos_raw.dropna(inplace=True)
     df_pos_raw.drop_duplicates(['ts', 'icao'], inplace=True)
 
     icaos = df_pos_raw['icao'].unique()
@@ -73,7 +86,13 @@ for i, df_raw in enumerate(adsbchunks):
                 last_odd_time = d[0]
 
             if abs(last_even_time - last_odd_time) < 10:
-                p = pms.adsb.position(last_even_msg, last_odd_msg, last_even_time, last_odd_time)
+                if pms.adsb.typecode(last_even_msg) != pms.adsb.typecode(last_odd_msg):
+                    continue
+
+                p = pms.adsb.position(last_even_msg, last_odd_msg,
+                                      last_even_time, last_odd_time,
+                                      lat0, lon0)
+
                 if not p:
                     continue
 
@@ -99,15 +118,26 @@ for i, df_raw in enumerate(adsbchunks):
 
     print("decoding velocities...")
 
-    # fliter by TypeCode 19, velocity messages
-    df_spd_raw = df_raw[df_raw['tc']==19]
+    # typecode 19 (airborn velocity) | typecode 5-8 (surface velocity)
+    df_spd_raw = df_raw[(df_raw['tc']==19) | (df_raw['tc'].between(5, 8))]
+    df_spd_raw.dropna(inplace=True)
+
     df_spd_raw.loc[:, 'ts_rounded'] = df_spd_raw['ts'].round().astype(int)
     df_spd_raw.drop_duplicates(['ts_rounded', 'icao'], inplace=True)
     df_spd_raw.drop('ts', axis=1, inplace=True)
 
     # merge velocity message to decoded positions
-    df_merged = df_pos_decoded.merge(df_spd_raw, on=['ts_rounded', 'icao'], how='left')
-    df_merged = df_merged.join(df_merged['msg'].apply(getv))
+    if mergeon == 'pos':
+        merge_type = 'left'
+        df_spd_raw.drop('ts', axis=1, inplace=True)
+        df_spd_raw.drop_duplicates(['ts_rounded', 'icao'], inplace=True)
+    elif mergeon == 'v':
+        merge_type = 'right'
+        df_pos_decoded.drop('ts', axis=1, inplace=True)
+        df_pos_decoded.drop_duplicates(['ts_rounded', 'icao'], inplace=True)
+
+    df_merged = df_pos_decoded.merge(df_spd_raw, on=['ts_rounded', 'icao'], how=merge_type)
+    df_merged = df_merged.join(df_merged['msg'].apply(get_v))
 
     print("decoding callsigns...")
 
