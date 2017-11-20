@@ -119,8 +119,9 @@ class BaseClient(object):
                 # print(''.join(x.encode('hex') for x in self.buffer))
 
                 # process self.buffer when it is longer enough
-                if len(self.buffer) < 2048:
-                    continue
+                # if len(self.buffer) < 2048:
+                #     continue
+                # -- Removed!! Cause delay in low data rate scenario --
 
                 messages = self.read_beast_buffer()
 
