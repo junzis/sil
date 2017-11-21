@@ -20,26 +20,37 @@ class ELSClient(BaseClient):
         self.pidfile_path = '/tmp/beast-els-client.pid'
         self.pidfile_timeout = 5
 
+        self.lines = []
+
     def handle_messages(self, messages):
         # get the current date file
         today = str(datetime.datetime.now().strftime("%Y%m%d"))
         csvfile = dataroot + 'ELS_RAW_%s.csv' % today
 
-        with open(csvfile, 'a') as f:
-            writer = csv.writer(f)
+        for msg, ts in messages:
+            if len(msg) > 14:
+                continue
 
-            for msg, ts in messages:
-                if len(msg) > 14:
-                    continue
+            df = pms.df(msg)
 
-                df = pms.df(msg)
+            if df not in [4, 5, 11]:
+                continue
 
-                if df not in [4, 5, 11]:
-                    continue
+            line = ['%.6f'%ts, 'DF%02d'%df, msg]
 
-                line = ['%.6f'%ts, 'DF%02d'%df, msg]
+            self.lines.append(line)
 
-                writer.writerow(line)
+        if len(self.lines) > 1000:
+            try:
+                fcsv = open(csvfile, 'a')
+                writer = csv.writer(fcsv)
+                writer.writerows(self.lines)
+                fcsv.close()
+            except Exception, err:
+                print err
+
+            self.lines = []
+
 
 if __name__ == '__main__':
     app = ELSClient(host=HOST, port=PORT)

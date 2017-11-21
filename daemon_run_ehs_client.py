@@ -20,27 +20,39 @@ class EHSClient(BaseClient):
         self.pidfile_path = '/tmp/beast-ehs-client.pid'
         self.pidfile_timeout = 5
 
+        self.lines = []
+
     def handle_messages(self, messages):
         # get the current date file
         today = str(datetime.datetime.now().strftime("%Y%m%d"))
         csvfile = dataroot + 'EHS_RAW_%s.csv' % today
 
-        with open(csvfile, 'a') as f:
-            writer = csv.writer(f)
-            for msg, ts in messages:
-                if len(msg) < 28:
-                    continue
+        for msg, ts in messages:
+            if len(msg) < 28:
+                continue
 
-                df = pms.df(msg)
+            df = pms.df(msg)
 
-                if df not in [20, 21]:
-                    continue
+            if df not in [20, 21]:
+                continue
 
-                addr = pms.ehs.icao(msg)
+            addr = pms.ehs.icao(msg)
 
-                line = ['%.6f'%ts, addr, msg]
+            line = ['%.6f'%ts, addr, msg]
 
-                writer.writerow(line)
+            self.lines.append(line)
+
+        if len(self.lines) > 1000:
+            try:
+                fcsv = open(csvfile, 'a')
+                writer = csv.writer(fcsv)
+                writer.writerows(self.lines)
+                fcsv.close()
+            except Exception, err:
+                print err
+
+            self.lines = []
+
 
 if __name__ == '__main__':
     app = EHSClient(host=HOST, port=PORT)
