@@ -106,8 +106,8 @@ class BaseClient(object):
 
     def handle_messages(self, messages):
         """re-implement this method to handle the messages"""
-        for msg in messages:
-            print("%-28s %f" % (msg[0], msg[1]))
+        for msg, ts in messages:
+            print("%-28s %f" % (msg, ts))
 
     def run(self):
         sock = self.connect()
