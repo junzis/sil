@@ -5,7 +5,7 @@ python decode_adsb_multi_process.py -h
 Decrease CHUNKSIZE for low memory computer.
 """
 
-from __future__ import print_function
+
 import sys
 import pandas as pd
 import numpy as np

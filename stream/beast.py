@@ -1,6 +1,6 @@
 '''Stream beast binary data from a TCP server, convert to mode-s messages'''
 
-from __future__ import print_function
+
 import time
 
 from . import BaseStream
