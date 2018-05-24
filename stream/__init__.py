@@ -3,6 +3,7 @@ import time
 import zmq
 
 class BaseStream(object):
+    ''' Base class for different stram formats'''    
     def __init__(self, host, port):
         self.host = host
         self.port = port
@@ -18,11 +19,6 @@ class BaseStream(object):
                 received = [i for i in self.socket.recv(1024)]
                 self.buffer.extend(received)
                 # print(''.join(x.encode('hex') for x in self.buffer))
-
-                # process self.buffer when it is longer enough
-                # if len(self.buffer) < 2048:
-                #     continue
-                # -- Removed!! Cause delay in low data rate scenario --
 
                 messages = self.read_message_in_buffer()
 
