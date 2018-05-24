@@ -4,16 +4,17 @@ import csv
 import pyModeS as pms
 from daemon.runner import DaemonRunner
 
-from client import BaseClient
+from stream.beast import BeastStream
+from stream.raw import RawStream
 
 dataroot = os.path.dirname(os.path.realpath(__file__)) + "/data/"
 
 HOST = "127.0.0.1"
 PORT = 30334
 
-class EHSClient(BaseClient):
+class EHSStream(BeastStream):
     def __init__(self, host, port):
-        super(EHSClient, self).__init__(host, port)
+        super(EHSStream, self).__init__(host, port)
         self.stdin_path = '/dev/null'
         self.stdout_path = '/tmp/ehs-stdout.log'
         self.stderr_path = '/tmp/ehs-error.log'
@@ -55,6 +56,6 @@ class EHSClient(BaseClient):
 
 
 if __name__ == '__main__':
-    app = EHSClient(host=HOST, port=PORT)
-    daemon_runner = DaemonRunner(app)
+    stream = EHSStream(host=HOST, port=PORT)
+    daemon_runner = DaemonRunner(stream)
     daemon_runner.do_action()

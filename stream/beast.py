@@ -2,29 +2,16 @@
 Stream beast raw data from a TCP server, convert to mode-s messages
 '''
 from __future__ import print_function
-import socket
 import time
 
-class BaseClient(object):
+from . import BaseStream
+
+class BeastStream(BaseStream):
     def __init__(self, host, port):
-        self.host = host
-        self.port = port
-        self.buffer = []
+        super(BeastStream, self).__init__(host, port)
+        self.lines = []
 
-    def connect(self):
-        while True:
-            try:
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.settimeout(10)    # 10 second timeout
-                s.connect((self.host, self.port))
-                print("Server connected - %s:%s" % (self.host, self.port))
-                print("collecting ADS-B messages...")
-                return s
-            except socket.error as err:
-                print("Socket connection error: %s. reconnecting..." % err)
-                time.sleep(3)
-
-    def read_beast_buffer(self):
+    def read_message_in_buffer(self):
         '''
         <esc> "1" : 6 byte MLAT timestamp, 1 byte signal level,
             2 byte Mode-AC
@@ -103,39 +90,3 @@ class BaseClient(object):
 
             messages.append([msg, ts])
         return messages
-
-    def handle_messages(self, messages):
-        """re-implement this method to handle the messages"""
-        for msg, ts in messages:
-            print("%-28s %f" % (msg, ts))
-
-    def run(self):
-        sock = self.connect()
-
-        while True:
-            try:
-                received = [ord(i) for i in sock.recv(1024)]
-                self.buffer.extend(received)
-                # print(''.join(x.encode('hex') for x in self.buffer))
-
-                # process self.buffer when it is longer enough
-                # if len(self.buffer) < 2048:
-                #     continue
-                # -- Removed!! Cause delay in low data rate scenario --
-
-                messages = self.read_beast_buffer()
-
-                if not messages:
-                    continue
-                else:
-                    self.handle_messages(messages)
-
-                time.sleep(0.001)
-            except Exception, e:
-                print("Unexpected Error:", e)
-
-
-if __name__ == '__main__':
-    # for testing purpose only
-    client = BaseClient(host='127.0.0.1', port=30334)
-    client.run()
