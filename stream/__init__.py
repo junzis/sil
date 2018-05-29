@@ -26,7 +26,7 @@ class BaseStream(object):
                 else:
                     self.handle_messages(messages)
 
-                time.sleep(0.001)
+                time.sleep(0.0001)
             except Exception as e:
                 print("Error:", e)
                 self.disconnect()

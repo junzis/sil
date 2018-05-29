@@ -3,7 +3,7 @@ import datetime
 import csv
 import pyModeS as pms
 
-# from stream.beast import BeastStream
+from stream.beast import BeastStream
 from stream.avr import AVRStream
 
 dataroot = os.path.dirname(os.path.realpath(__file__)) + "/data/"
@@ -45,19 +45,19 @@ class SilStream(AVRStream):
                     line = ['%.6f'%ts, icao, msg]
                     self.els_rows.append(line)
 
-        if len(self.adsb_rows) > 1000:
+        if len(self.adsb_rows) > 100:
             with open(adsb_csv_path, 'a') as adsb_fcsv:
                 writer = csv.writer(adsb_fcsv)
                 writer.writerows(self.adsb_rows)
             self.adsb_rows = []
 
-        if len(self.ehs_rows) > 1000:
+        if len(self.ehs_rows) > 500:
             with open(ehs_csv_path, 'a') as ehs_fcsv:
                 writer = csv.writer(ehs_fcsv)
                 writer.writerows(self.ehs_rows)
             self.ehs_rows = []
 
-        if len(self.els_rows) > 1000:
+        if len(self.els_rows) > 500:
             with open(els_csv_path, 'a') as els_fcsv:
                 writer = csv.writer(els_fcsv)
                 writer.writerows(self.els_rows)
@@ -66,7 +66,7 @@ class SilStream(AVRStream):
 if __name__ == '__main__':
     HOST = "sil.lr.tudelft.nl"
 
-    # PORT = 30334    # Beast
+    #PORT = 30334    # Beast
     PORT = 30003    # AVR
 
     stream = SilStream(host=HOST, port=PORT)

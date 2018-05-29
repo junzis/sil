@@ -18,21 +18,19 @@ class AVRStream(BaseStream):
         # Append message with 0-9,A-F,a-f, until stop sign
 
         messages = []
-        i = 0
 
-        while i < len(self.buffer):
-            b = self.buffer[i]
+        msg_stop = False
+        for b in self.buffer:
+            if b == 59:
+                msg_stop = True
+                ts = time.time()
+                messages.append([self.current_msg, ts])
             if b == 42:
-                if len(self.current_msg) in [14, 28]:
-                    ts = time.time()
-                    messages.append([self.current_msg, ts])
-
+                msg_stop = False
                 self.current_msg = ''
-            elif 48<=b<=57 or 65<=b<=70 or 97<=b<=102:
+
+            if (not msg_stop) and (48<=b<=57 or 65<=b<=70 or 97<=b<=102):
                 self.current_msg = self.current_msg + chr(b)
-            else:
-                pass
-            i += 1
 
         self.buffer = []
 
