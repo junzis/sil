@@ -11,13 +11,11 @@ class AVRStream(BaseStream):
         self.current_msg = ''
 
     def read_message_in_buffer(self):
-
+        # -- testing --
         # for b in self.buffer:
         #     print(chr(b), b)
 
-
-        # process the buffer until space
-        # then, reset the self.buffer with the remainder
+        # Append message with 0-9,A-F,a-f, until stop sign
 
         messages = []
         i = 0
