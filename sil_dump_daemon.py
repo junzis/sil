@@ -27,22 +27,26 @@ class SilStream(AVRStream):
         els_csv_path = dataroot + 'ELS_RAW_%s.csv' % today
 
         for msg, ts in messages:
-            if len(msg) not in [14, 28]:
+            nstr = len(msg)
+            if nstr not in [14, 28]:
                 continue
 
             df = pms.df(msg)
             icao = pms.adsb.icao(msg)
 
             if df==17:
-                tc = pms.adsb.typecode(msg)
-                line = ['%.6f'%ts, icao, '%02d'%tc, msg]
-                self.adsb_rows.append(line)
+                if nstr == 28:
+                    tc = pms.adsb.typecode(msg)
+                    line = ['%.6f'%ts, icao, '%02d'%tc, msg]
+                    self.adsb_rows.append(line)
             elif df==20 or df==21:
-                line = ['%.6f'%ts, icao, msg]
-                self.ehs_rows.append(line)
+                if nstr == 28:
+                    line = ['%.6f'%ts, icao, msg]
+                    self.ehs_rows.append(line)
             elif df==4 or df==5 or df==11:
-                line = ['%.6f'%ts, icao, msg]
-                self.els_rows.append(line)
+                if nstr == 14:
+                    line = ['%.6f'%ts, icao, msg]
+                    self.els_rows.append(line)
 
         if len(self.adsb_rows) > 1000:
             with open(adsb_csv_path, 'a') as adsb_fcsv:
