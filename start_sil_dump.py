@@ -3,9 +3,6 @@ import datetime
 import csv
 import pyModeS as pms
 
-import daemon
-from daemon import pidfile
-
 # from stream.beast import BeastStream
 from stream.avr import AVRStream
 
@@ -67,17 +64,10 @@ class SilStream(AVRStream):
             self.els_rows = []
 
 if __name__ == '__main__':
-    HOST = "127.0.0.1"
+    HOST = "sil.lr.tudelft.nl"
 
     # PORT = 30334    # Beast
     PORT = 30003    # AVR
 
     stream = SilStream(host=HOST, port=PORT)
-    # stream.receive()      # for test
-
-    fpid = '/tmp/beast-client.pid'
-    context = daemon.DaemonContext(
-        pidfile=pidfile.TimeoutPIDLockFile(fpid),
-    )
-    with context:
-        stream.receive()
+    stream.receive()
