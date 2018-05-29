@@ -5,17 +5,13 @@ import pyModeS as pms
 
 import daemon
 from daemon import pidfile
-from daemon.runner import DaemonRunner
 
-from stream.beast import BeastStream
-from stream.raw import RawStream
+# from stream.beast import BeastStream
+from stream.avr import AVRStream
 
 dataroot = os.path.dirname(os.path.realpath(__file__)) + "/data/"
 
-HOST = "sil.lr.tudelft.nl"
-PORT = 30334
-
-class SilStream(BeastStream):
+class SilStream(AVRStream):
     def __init__(self, host, port):
         super(SilStream, self).__init__(host, port)
 
@@ -67,8 +63,13 @@ class SilStream(BeastStream):
             self.els_rows = []
 
 if __name__ == '__main__':
+    HOST = "127.0.0.1"
+
+    # PORT = 30334    # Beast
+    PORT = 30003    # AVR
+
     stream = SilStream(host=HOST, port=PORT)
-    # stream.receive()
+    # stream.receive()      # for test
 
     fpid = '/tmp/beast-client.pid'
     context = daemon.DaemonContext(

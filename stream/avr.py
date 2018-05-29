@@ -4,9 +4,9 @@
 import time
 from . import BaseStream
 
-class RawStream(BaseStream):
+class AVRStream(BaseStream):
     def __init__(self, host, port):
-        super(RawStream, self).__init__(host, port)
+        super(AVRStream, self).__init__(host, port)
         self.lines = []
         self.current_msg = ''
 

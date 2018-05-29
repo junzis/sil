@@ -3,7 +3,7 @@ import time
 import zmq
 
 class BaseStream(object):
-    ''' Base class for different stram formats'''    
+    ''' Base class for different stram formats'''
     def __init__(self, host, port):
         self.host = host
         self.port = port
@@ -16,9 +16,8 @@ class BaseStream(object):
         print("Reading messages...")
         while True:
             try:
-                received = [i for i in self.socket.recv(1024)]
+                received = [i for i in self.socket.recv(4096)]
                 self.buffer.extend(received)
-                # print(''.join(x.encode('hex') for x in self.buffer))
 
                 messages = self.read_message_in_buffer()
 
@@ -31,6 +30,7 @@ class BaseStream(object):
             except Exception as e:
                 print("Error:", e)
                 self.disconnect()
+                time.sleep(3)
                 self.connect()
 
 
