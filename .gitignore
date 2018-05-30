@@ -1,6 +1,7 @@
 data
 !empty
 .DS_Store
+tmp_*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

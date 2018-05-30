@@ -1,8 +1,7 @@
 '''Stream AVR RAW format data from a TCP server, convert to mode-s messages'''
 
-
 import time
-from . import BaseStream
+from .base import BaseStream
 
 class AVRStream(BaseStream):
     def __init__(self, host, port):

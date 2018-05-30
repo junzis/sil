@@ -1,9 +1,8 @@
 '''Stream beast binary data from a TCP server, convert to mode-s messages'''
 
-
 import time
-
-from . import BaseStream
+import pyModeS as pms
+from .base import BaseStream
 
 class BeastStream(BaseStream):
     def __init__(self, host, port):
@@ -68,6 +67,8 @@ class BeastStream(BaseStream):
         # extract messages
         messages = []
         for mm in messages_mlat:
+            ts = time.time()
+
             msgtype = mm[0]
             # print(''.join('%02X' % i for i in mm))
 
@@ -84,8 +85,6 @@ class BeastStream(BaseStream):
             if len(msg) not in [14, 28]:
                 # incomplete message
                 continue
-
-            ts = time.time()
 
             messages.append([msg, ts])
         return messages
