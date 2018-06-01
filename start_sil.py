@@ -4,7 +4,7 @@ from stream.avr import AVRStream
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--debug', dest='debug', action='store_true', default=False)
-parser.add_argument('--type', dest='stream_type', help="raw stream type [beast/avr]", default='avr')
+parser.add_argument('--type', dest='stream_type', help="raw stream type [beast/avr]", default='beast')
 args = parser.parse_args()
 
 host = "127.0.0.1"
