@@ -64,10 +64,6 @@ class BaseStream(object):
         return messages
 
     def process_messages(self, messages):
-        # get the current data/hour for the file name
-        dh = str(datetime.datetime.now().strftime("%Y%m%d_%H"))
-        csv_path = dataroot + 'RAW_%s.csv' % dh
-
         for msg, ts in messages:
             nstr = len(msg)
             df = pms.df(msg)
@@ -87,6 +83,10 @@ class BaseStream(object):
 
             self.csvbuff.append(line)
             if len(self.csvbuff) > 1000:
+                # get the current data/hour for the file name
+                dh = str(datetime.datetime.utcnow().strftime("%Y%m%d_%H"))
+                csv_path = dataroot + 'RAW_%s.csv' % dh
+
                 with open(csv_path, 'a') as fcsv:
                     writer = csv.writer(fcsv)
                     writer.writerows(self.csvbuff)
