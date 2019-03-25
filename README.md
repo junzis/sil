@@ -52,30 +52,6 @@ client.run()
 
 ```
 
-## Runing Client Service as daemon
-Start the client (ADSB, EHS, or ELS) service with:
-```sh
-$ python daemon_run_adsb_client.py start
-$ python daemon_run_ehs_client.py start
-$ python daemon_run_ehs_client.py start
-```
-
-Raw messages will be saved to following plain text files, and sorted by date:
-
-```
-./data/ADSB_RAW_YYYYMMDD.csv
-./data/EHS_RAW_YYYYMMDD.csv
-./data/ELS_RAW_YYYYMMDD.csv
-```
-
-
-Stop the client service with:
-```sh
-$ python daemon_run_adsb_client.py stop
-$ python daemon_run_ehs_client.py stop
-$ python daemon_run_els_client.py stop
-```
-
 
 Script to check all service status, and start them if not running:
 
