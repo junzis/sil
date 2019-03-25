@@ -16,11 +16,11 @@ $ telnet 127.0.0.1 30334
 
 ## Extend the code to an ADS-B streaming application
 
-Here is an example to use ``client.BaseClient()`` class for you own ADS-B online processing.
+Here is an example to use ``stream.base.BaseClient()`` class for you own ADS-B online processing.
 
 ```python
 import pyModeS as pms
-from client import BaseClient
+from stream.base import BaseClient
 
 # define your custom class extending the BaseClient
 #   - implement your handle_messages() methods
