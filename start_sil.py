@@ -1,6 +1,9 @@
+from tendo import singleton
 import argparse
 from stream.beast import BeastStream
 from stream.avr import AVRStream
+
+me = singleton.SingleInstance()
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--debug', dest='debug', action='store_true', default=False)
