@@ -53,8 +53,8 @@ client.run()
 ```
 
 
-Script to check all service status, and start them if not running:
+To start the script automatically, add the following to ``contrab``:
 
-```sh
-$ python check_service.py
+```
+@reboot python3 \[path_to_script]\start_sil.py &
 ```
