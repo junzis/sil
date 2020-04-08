@@ -1,60 +1,67 @@
-# Python Client for Mode-s Beast Raw Data
+# Python Client for Mode S Raw Data
 
-The tool is designed in Python to dump raw ADS-B or EHS message from a mode-s beast raw data stream.
+The tool is designed in Python to dump raw ADS-B and Mode S message from a beast or AVR data stream.
 
-For example, it can be used in combination with [modesmixer2](http://xdeco.org/?page_id=48) and your favorite receiver:
-
-```sh
-$ modesmixer2 --inSeriel port[:speed[:flow_control]] --outServer beast:30334
-```
-
-Now you will have the RAW message served on TCP 30334 port. You can check with ``telnet`` command.
+## 1. Install dependencies
 
 ```sh
-$ telnet 127.0.0.1 30334
+$ pip install pyModeS tendo pandas
 ```
 
-## Extend the code to an ADS-B streaming application
+## 2. Collecting data
 
-Here is an example to use ``stream.base.BaseClient()`` class for you own ADS-B online processing.
+### [optional] Setting up the source (if you don't have a raw stream)
 
-```python
-import pyModeS as pms
-from stream.base import BaseClient
+Install [dump1090](https://github.com/flightaware/dump1090) and run following:
 
-# define your custom class extending the BaseClient
-#   - implement your handle_messages() methods
-class ADSBClient(BaseClient):
-    def __init__(self, host, port):
-        super(ADSBClient, self).__init__(host, port)
-
-    def handle_messages(self, messages):
-        for msg, ts in messages:
-            if len(msg) < 28:           # wrong data length
-                continue
-
-            df = pms.df(msg)
-
-            if df != 17:                # not ADSB
-                continue
-
-            if '1' in pms.crc(msg):     # CRC fail
-                continue
-
-            icao = pms.adsb.icao(msg)
-            tc = pms.adsb.typecode(msg)
-
-            # TODO: write you magic code here
-            print ts, icao, tc, msg
-
-client = ADSBClient(host='127.0.0.1', port=30334)
-client.run()
-
+```ssh
+$ ./dump1090 --net --quite
 ```
 
+Now you will have the raw messages served on TCP ports 30002 (AVR format) and 30005 (beast format). You can check using ``telnet`` command.
+
+```sh
+$ telnet 127.0.0.1 30002
+$ telnet 127.0.0.1 30005
+```
+
+### Saving raw data using SIL script
+
+Once you have a TCP raw message stream ready, use `start_sil.py` to collect data.
+
+For example, collecting ADS-B only from a AVR stream:
+
+```ssh
+$ python start_sil.py --port 30002 --type avr --df-filter 17
+```
+
+or, collecting multiple DF used Mode S Beast stream from a remote server
+
+```ssh
+$ python start_sil.py --host [hostname_or_ip] --port 30005 --type beast --df-filter 17 20 21
+```
+
+Additional information
+
+- User `python start_sil.py -h` to see more options
+- Option `--df-filter` allows you to specify the Downlink Formats to save
+- In crease `--buffer-size` to decrease the frequency of saving data to disk
+- Data is saved per hour (UTC), under `data` folder, with format `RAW_YYYYMMDD_HH.csv`
+- CSV columns are: unix timestamp, downlink format, ICAO address, raw message
+
+
+## 3. Start the script automatically
 
 To start the script automatically, add the following to ``contrab``:
 
 ```
-@reboot python3 \[path_to_script]\start_sil.py &
+@reboot python3 \[path_to_script]\start_sil.py [options] &
+```
+
+## 4. Decoding save data
+
+You can decode saved data using the scripts under `extra_tools`. For example:
+
+```sh
+$ python extra_tools/decode_adsb_single_thread.py --fin [input_file] --fout [output_file] --lat0 [receiver_latitude] --lon0 [longitude]
 ```

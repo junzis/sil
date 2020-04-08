@@ -95,9 +95,7 @@ def decode_raw_file(fraw):
                 last_odd_time = d[0]
 
             if abs(last_even_time - last_odd_time) < 10:
-                if pms.adsb.typecode(last_even_msg) != pms.adsb.typecode(
-                    last_odd_msg
-                ):
+                if pms.adsb.typecode(last_even_msg) != pms.adsb.typecode(last_odd_msg):
                     continue
 
                 p = pms.adsb.position(
@@ -134,12 +132,10 @@ def decode_raw_file(fraw):
 
     df_pos_decoded = pd.DataFrame(postitions)
 
-    print("decoding velocities...")
+    print("%s: decoding velocities...")
 
     # typecode 19 (airborn velocity) | typecode 5-8 (surface velocity)
-    df_spd_raw = df_raw[
-        (df_raw["tc"] == 19) | (df_raw["tc"].between(5, 8))
-    ].copy()
+    df_spd_raw = df_raw[(df_raw["tc"] == 19) | (df_raw["tc"].between(5, 8))].copy()
     df_spd_raw.dropna(inplace=True)
     df_spd_raw.loc[:, "ts"] = df_spd_raw["ts"].round(2)
     df_spd_raw.drop_duplicates(["ts", "icao"], keep="last", inplace=True)
@@ -148,9 +144,7 @@ def decode_raw_file(fraw):
 
     # merge velocity message to decoded positions
     merge_type = "left"
-    df_spd_raw.drop_duplicates(
-        ["ts_rounded", "icao"], keep="last", inplace=True
-    )
+    df_spd_raw.drop_duplicates(["ts_rounded", "icao"], keep="last", inplace=True)
 
     df_merged = df_pos_decoded.merge(
         df_spd_raw, on=["ts_rounded", "icao"], how=merge_type
@@ -158,30 +152,22 @@ def decode_raw_file(fraw):
 
     df_merged = df_merged.join(df_merged["msg"].apply(get_v))
 
-    print("decoding callsigns...")
+    print("%s: decoding callsigns...")
 
     # decode callsign
     df_callsign_raw = df_raw[df_raw["tc"].between(1, 4)].copy()
-    df_callsign_raw.loc[:, "ts_rounded"] = (
-        df_callsign_raw["ts"].round().astype(int)
-    )
+    df_callsign_raw.loc[:, "ts_rounded"] = df_callsign_raw["ts"].round().astype(int)
     df_callsign_raw.drop_duplicates(["ts", "icao"], keep="last", inplace=True)
-    df_callsign_raw["callsign"] = df_callsign_raw["msg"].apply(
-        pms.adsb.callsign
-    )
+    df_callsign_raw["callsign"] = df_callsign_raw["msg"].apply(pms.adsb.callsign)
     df_callsign = df_callsign_raw.drop(["ts", "msg"], axis=1).copy()
 
-    df_merged = df_merged.merge(
-        df_callsign, on=["ts_rounded", "icao"], how="left"
-    )
+    df_merged = df_merged.merge(df_callsign, on=["ts_rounded", "icao"], how="left")
 
     df_merged.drop_duplicates(
         ["icao", "lat", "lon", "gs", "trk", "roc"], keep="last", inplace=True
     )
 
     df_merged = df_merged[COLS]
-
-    df_merged = df_merged.sort_values("ts")
 
     return df_merged
 

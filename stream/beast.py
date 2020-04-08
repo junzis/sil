@@ -1,16 +1,17 @@
-'''Stream beast binary data from a TCP server, convert to mode-s messages'''
+"""Stream beast binary data from a TCP server, convert to mode-s messages"""
 
 import time
 import pyModeS as pms
 from .base import BaseStream
 
+
 class BeastStream(BaseStream):
-    def __init__(self, host, port):
-        super(BeastStream, self).__init__(host, port)
+    def __init__(self, host, port, df_filter=None, buff_size=400):
+        super(BeastStream, self).__init__(host, port, df_filter, buff_size)
         self.lines = []
 
     def read_message_in_buffer(self):
-        '''
+        """
         <esc> "1" : 6 byte MLAT timestamp, 1 byte signal level,
             2 byte Mode-AC
         <esc> "2" : 6 byte MLAT timestamp, 1 byte signal level,
@@ -24,7 +25,7 @@ class BeastStream(BaseStream):
 
         timestamp:
         wiki.modesbeast.com/Radarcape:Firmware_Versions#The_GPS_timestamp
-        '''
+        """
 
         messages_mlat = []
         msg = []
@@ -34,16 +35,16 @@ class BeastStream(BaseStream):
         # then, reset the self.buffer with the remainder
 
         while i < len(self.buffer):
-            if (self.buffer[i:i+2] == [0x1a, 0x1a]):
-                msg.append(0x1a)
+            if self.buffer[i : i + 2] == [0x1A, 0x1A]:
+                msg.append(0x1A)
                 i += 1
-            elif (i == len(self.buffer) - 1) and (self.buffer[i] == 0x1a):
+            elif (i == len(self.buffer) - 1) and (self.buffer[i] == 0x1A):
                 # special case where the last bit is 0x1a
-                msg.append(0x1a)
-            elif self.buffer[i] == 0x1a:
+                msg.append(0x1A)
+            elif self.buffer[i] == 0x1A:
                 if i == len(self.buffer) - 1:
                     # special case where the last bit is 0x1a
-                    msg.append(0x1a)
+                    msg.append(0x1A)
                 elif len(msg) > 0:
                     messages_mlat.append(msg)
                     msg = []
@@ -55,12 +56,12 @@ class BeastStream(BaseStream):
         if len(msg) > 0:
             reminder = []
             for i, m in enumerate(msg):
-                if (m == 0x1a) and (i < len(msg)-1):
+                if (m == 0x1A) and (i < len(msg) - 1):
                     # rewind 0x1a, except when it is at the last bit
                     reminder.extend([m, m])
                 else:
                     reminder.append(m)
-            self.buffer = [0x1a] + msg
+            self.buffer = [0x1A] + msg
         else:
             self.buffer = []
 
@@ -74,10 +75,10 @@ class BeastStream(BaseStream):
 
             if msgtype == 0x32:
                 # Mode-S Short Message, 7 byte, 14-len hexstr
-                msg = ''.join('%02X' % i for i in mm[8:15])
+                msg = "".join("%02X" % i for i in mm[8:15])
             elif msgtype == 0x33:
                 # Mode-S Long Message, 14 byte, 28-len hexstr
-                msg = ''.join('%02X' % i for i in mm[8:22])
+                msg = "".join("%02X" % i for i in mm[8:22])
             else:
                 # Other message tupe
                 continue

@@ -1,13 +1,14 @@
-'''Stream AVR RAW format data from a TCP server, convert to mode-s messages'''
+"""Stream AVR RAW format data from a TCP server, convert to mode-s messages"""
 
 import time
 from .base import BaseStream
 
+
 class AVRStream(BaseStream):
-    def __init__(self, host, port):
-        super(AVRStream, self).__init__(host, port)
+    def __init__(self, host, port, df_filter=None, buff_size=400):
+        super(AVRStream, self).__init__(host, port, df_filter, buff_size)
         self.lines = []
-        self.current_msg = ''
+        self.current_msg = ""
 
     def read_message_in_buffer(self):
         # -- testing --
@@ -26,9 +27,9 @@ class AVRStream(BaseStream):
                 messages.append([self.current_msg, ts])
             if b == 42:
                 msg_stop = False
-                self.current_msg = ''
+                self.current_msg = ""
 
-            if (not msg_stop) and (48<=b<=57 or 65<=b<=70 or 97<=b<=102):
+            if (not msg_stop) and (48 <= b <= 57 or 65 <= b <= 70 or 97 <= b <= 102):
                 self.current_msg = self.current_msg + chr(b)
 
         self.buffer = []

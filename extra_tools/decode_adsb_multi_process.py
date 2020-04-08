@@ -1,6 +1,5 @@
 """
-Decode ADS-B from the SIL RAW dump using multiprocessing,
-run following for arguments:
+Decode an ADS-B dump using multiprocessing, run following for arguments
 python decode_adsb_multi_process.py -h
 """
 
@@ -55,6 +54,8 @@ fout = "%s/%d/%d_%02d/ADSB_DECODED_%d%02d%02d.csv" % (
     month,
     day,
 )
+
+os.makedirs("%s/%d/%d_%02d" % (outdir, year, year, month), exist_ok=True)
 
 if os.path.exists(fout):
     print(fout + " already exists. Skipping.")

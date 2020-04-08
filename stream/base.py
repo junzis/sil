@@ -7,9 +7,11 @@ import pyModeS as pms
 
 dataroot = os.path.dirname(os.path.realpath(__file__)) + "/../data/"
 
+
 class BaseStream(object):
-    ''' Base class for different stram formats'''
-    def __init__(self, host, port):
+    """ Base class for different stram formats"""
+
+    def __init__(self, host, port, df_filter=None, buff_size=400):
         self.host = host
         self.port = port
         self.buffer = []
@@ -18,15 +20,26 @@ class BaseStream(object):
         self.stream_type = None
 
         self.short_msg_dfs = (0, 4, 5, 11)
-        self.long_msg_dfs = (16, 17, 18, 20, 21)
+        self.long_msg_dfs = (16, 17, 18, 19, 20, 21, 24)
         self.csvbuff = []
+
+        if df_filter is not None:
+            self.df_filter = df_filter
+        else:
+            self.df_filter = self.short_msg_dfs + self.long_msg_dfs
+
+        self.buff_size = buff_size
 
         self.debug = False
 
     def receive(self):
         self.connect()
 
-        print("Reading messages...")
+        if self.df_filter is not None:
+            print("Downlink format filter applied:", self.df_filter)
+
+        print("Receiving messages...")
+
         while True:
             try:
                 received = [i for i in self.socket.recv(4096)]
@@ -46,9 +59,8 @@ class BaseStream(object):
                 time.sleep(3)
                 self.connect()
 
-
     def connect(self):
-        print("Connecting to server...")
+        print("Connecting to server: {}, port: {}".format(self.host, self.port))
         self.socket = zmq.Context().socket(zmq.STREAM)
         self.socket.setsockopt(zmq.LINGER, 0)
         self.socket.setsockopt(zmq.RCVTIMEO, 2000)
@@ -60,7 +72,7 @@ class BaseStream(object):
 
     def read_message_in_buffer(self):
         """re-implement this method to read message from buffer"""
-        messages = ['messages 1', 'messages 2', 'implement this method.']
+        messages = ["messages 1", "messages 2", "implement this method."]
         return messages
 
     def process_messages(self, messages):
@@ -68,26 +80,29 @@ class BaseStream(object):
             nstr = len(msg)
             df = pms.df(msg)
 
-            if (nstr==14) and (df not in self.short_msg_dfs):
+            if df not in self.df_filter:
                 continue
 
-            if (nstr==28) and (df not in self.long_msg_dfs):
+            if (nstr == 14) and (df not in self.short_msg_dfs):
+                continue
+
+            if (nstr == 28) and (df not in self.long_msg_dfs):
                 continue
 
             icao = pms.adsb.icao(msg)
-            line = ['%.9f'%ts, '%02d'%df, icao, msg]
+            line = ["%.9f" % ts, "%02d" % df, icao, msg]
 
             if self.debug:
                 print(line)
                 continue
 
             self.csvbuff.append(line)
-            if len(self.csvbuff) > 1000:
+            if len(self.csvbuff) > self.buff_size:
                 # get the current data/hour for the file name
                 dh = str(datetime.datetime.utcnow().strftime("%Y%m%d_%H"))
-                csv_path = dataroot + 'RAW_%s.csv' % dh
+                csv_path = dataroot + "RAW_%s.csv" % dh
 
-                with open(csv_path, 'a') as fcsv:
+                with open(csv_path, "a") as fcsv:
                     writer = csv.writer(fcsv)
                     writer.writerows(self.csvbuff)
                 self.csvbuff = []
