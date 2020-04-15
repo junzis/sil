@@ -35,7 +35,7 @@ parser.add_argument(
     "--buffer-size",
     dest="buff_size",
     help="Message buffer size, increas to lower write frequence to disk",
-    default=400,
+    default=100,
     type=int,
 )
 

@@ -6,7 +6,7 @@ from .base import BaseStream
 
 
 class BeastStream(BaseStream):
-    def __init__(self, host, port, df_filter=None, buff_size=400):
+    def __init__(self, host, port, df_filter=None, buff_size=100):
         super(BeastStream, self).__init__(host, port, df_filter, buff_size)
         self.lines = []
 

@@ -11,7 +11,7 @@ dataroot = os.path.dirname(os.path.realpath(__file__)) + "/../data/"
 class BaseStream(object):
     """ Base class for different stram formats"""
 
-    def __init__(self, host, port, df_filter=None, buff_size=400):
+    def __init__(self, host, port, df_filter=None, buff_size=100):
         self.host = host
         self.port = port
         self.buffer = []
