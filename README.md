@@ -15,7 +15,7 @@ $ pip install pyModeS tendo pandas
 Install [dump1090](https://github.com/flightaware/dump1090) and run following:
 
 ```ssh
-$ ./dump1090 --net --quite
+$ ./dump1090 --net --quiet
 ```
 
 Now you will have the raw messages served on TCP ports 30002 (AVR format) and 30005 (beast format). You can check using ``telnet`` command.
@@ -27,7 +27,14 @@ $ telnet 127.0.0.1 30005
 
 ### Saving raw data using SIL script
 
-Once you have a TCP raw message stream ready, use `start_sil.py` to collect data.
+Once you have a TCP raw message stream ready, use `start_sil.py` from this repository to collect data. First download this repository, or clone it use:
+
+```ssh
+$ git clone https://github.com/junzis/sil.git
+$ cd sil
+```
+
+Then you can starting save raw messages.
 
 For example, collecting ADS-B only from a AVR stream:
 
@@ -45,7 +52,7 @@ Additional information
 
 - User `python start_sil.py -h` to see more options
 - Option `--df-filter` allows you to specify the Downlink Formats to save
-- In crease `--buffer-size` to decrease the frequency of saving data to disk
+- Increase `--buffer-size` to decrease the frequency of saving data to disk
 - Data is saved per hour (UTC), under `data` folder, with format `RAW_YYYYMMDD_HH.csv`
 - CSV columns are: unix timestamp, downlink format, ICAO address, raw message
 
