@@ -54,7 +54,7 @@ class BaseStream(object):
 
                 time.sleep(0.0001)
             except Exception as e:
-                time.sleep(5)
+                time.sleep(3)
 
     def connect(self):
         print("Connecting to server: {}, port: {}".format(self.host, self.port))
