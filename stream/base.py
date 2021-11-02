@@ -11,7 +11,8 @@ dataroot = os.path.dirname(os.path.realpath(__file__)) + "/../data/"
 class BaseStream(object):
     """ Base class for different stram formats"""
 
-    def __init__(self, host, port, df_filter=None, buff_size=100):
+    def __init__(self, host, port, df_filter=None, buff_size=100,
+                 output_dir=None):
         self.host = host
         self.port = port
         self.buffer = []
@@ -30,6 +31,7 @@ class BaseStream(object):
 
         self.buff_size = buff_size
 
+        self.output_dir = output_dir if output_dir is not None else dataroot
         self.debug = False
 
     def receive(self):
@@ -97,7 +99,7 @@ class BaseStream(object):
             if len(self.csvbuff) > self.buff_size:
                 # get the current data/hour for the file name
                 dh = str(datetime.datetime.utcnow().strftime("%Y%m%d_%H"))
-                csv_path = dataroot + "RAW_%s.csv" % dh
+                csv_path = self.output_dir + "RAW_%s.csv" % dh
 
                 with open(csv_path, "a") as fcsv:
                     writer = csv.writer(fcsv)

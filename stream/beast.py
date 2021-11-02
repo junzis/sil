@@ -6,8 +6,10 @@ from .base import BaseStream
 
 
 class BeastStream(BaseStream):
-    def __init__(self, host, port, df_filter=None, buff_size=100):
-        super(BeastStream, self).__init__(host, port, df_filter, buff_size)
+    def __init__(self, host, port, df_filter=None, buff_size=100,
+                 output_dir=None):
+        super(BeastStream, self).__init__(host, port, df_filter, buff_size,
+                                          output_dir=output_dir)
         self.lines = []
 
     def read_message_in_buffer(self):

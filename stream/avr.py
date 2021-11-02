@@ -5,8 +5,10 @@ from .base import BaseStream
 
 
 class AVRStream(BaseStream):
-    def __init__(self, host, port, df_filter=None, buff_size=100):
-        super(AVRStream, self).__init__(host, port, df_filter, buff_size)
+    def __init__(self, host, port, df_filter=None, buff_size=100,
+                 output_dir=None):
+        super(AVRStream, self).__init__(host, port, df_filter, buff_size,
+                                        output_dir=output_dir)
         self.lines = []
         self.current_msg = ""
 
